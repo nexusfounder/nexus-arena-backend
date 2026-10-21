@@ -1,0 +1,1521 @@
+/* ==========================================================================
+   NEXUS ARENA V2.0 - CYBERPUNK ESPORTS ANIMATIONS & HIGH-ENERGY GAMING STYLES
+   Inspired by elite gaming ecosystems (Tactical Rugged + Neon RGB Vibes)
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,500;0,600;0,700;1,700&family=Exo+2:ital,wght@0,500;0,600;0,700;0,800;0,900;1,700&family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@500;600;700;800;900&family=Rajdhani:wght@500;600;700;800&family=Russo+One&display=swap');
+
+:root {
+  --neon-cyan: #00f2fe;
+  --neon-violet: #7928ca;
+  --neon-pink: #ff007f;
+  --neon-green: #00ff88;
+  --neon-gold: #f5a623;
+  --dark-abyss: #07080c;
+  --dark-card: #0f121b;
+  --dark-border: #1a2030;
+  --dark-surface: #141824;
+  --arena-page-zoom: 1;
+}
+
+/* Base Responsive & Layout Stabilization — Zero Boundary Crossing */
+html {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+body {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+#main-arena-app {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+  position: relative;
+}
+
+#top-navbar {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+/* ==========================================
+   1. KEYFRAME ANIMATIONS
+   ========================================== */
+
+/* Rotating Rainbow Cyber Border */
+@keyframes cyberBorderRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Pulsing Neon Glow */
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.35), 0 0 30px rgba(0, 242, 254, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(0, 242, 254, 0.6), 0 0 45px rgba(0, 242, 254, 0.3);
+  }
+}
+
+@keyframes neonPulseViolet {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(121, 40, 202, 0.35), 0 0 30px rgba(121, 40, 202, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(121, 40, 202, 0.6), 0 0 50px rgba(121, 40, 202, 0.3);
+  }
+}
+
+/* Button Sweep Light Shine */
+@keyframes buttonSweep {
+  0% { transform: translateX(-100%) skewX(-25deg); }
+  100% { transform: translateX(200%) skewX(-25deg); }
+}
+
+/* Continuous Marquee Ticker */
+@keyframes marqueeScroll {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Hologram Scanline */
+@keyframes scanlineMove {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+
+/* Subtle Floating Hover */
+@keyframes floatGentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Live Badge Ping */
+@keyframes livePulseDot {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+/* Text Shimmer */
+@keyframes textShimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ==========================================
+   2. CUSTOM TACTICAL & ESPORTS UTILITIES
+   ========================================== */
+
+/* Tactical Angled Cuts */
+.tactical-cut {
+  clip-path: polygon(14px 0%, 100% 0%, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0% 100%, 0% 14px);
+}
+
+.tactical-badge {
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+
+.tactical-chamfer-top {
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+}
+
+/* Glow Utilities */
+.glow-cyan {
+  box-shadow: 0 0 20px rgba(0, 242, 254, 0.35);
+}
+
+.glow-violet {
+  box-shadow: 0 0 25px rgba(121, 40, 202, 0.4);
+}
+
+.glow-gold {
+  box-shadow: 0 0 20px rgba(245, 166, 35, 0.35);
+}
+
+.glow-pink {
+  box-shadow: 0 0 20px rgba(255, 0, 127, 0.35);
+}
+
+.glow-text-cyan {
+  text-shadow: 0 0 12px rgba(0, 242, 254, 0.6);
+}
+
+.glow-text-gold {
+  text-shadow: 0 0 12px rgba(245, 166, 35, 0.6);
+}
+
+/* Animated Border Card Wrapper */
+.animated-border-card {
+  position: relative;
+  border-radius: 1.5rem;
+  background: var(--dark-card);
+  overflow: hidden;
+  transition: all 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.animated-border-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(from 0deg at 50% 50%, var(--neon-cyan), var(--neon-violet), var(--neon-pink), var(--neon-cyan));
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  animation: cyberBorderRotate 6s linear infinite;
+}
+
+.animated-border-card:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 242, 254, 0.25);
+}
+
+.animated-border-card:hover::before {
+  opacity: 1;
+}
+
+/* Sweep Button Effect */
+.btn-sweep {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-sweep::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: translateX(-150%) skewX(-25deg);
+}
+
+.btn-sweep:hover::after {
+  animation: buttonSweep 0.75s ease-in-out;
+}
+
+/* Marquee Scroller */
+.marquee-container {
+  display: flex;
+  overflow: hidden !important;
+  user-select: none;
+  white-space: nowrap;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.marquee-content {
+  display: flex;
+  flex-shrink: 0;
+  animation: marqueeScroll 28s linear infinite;
+}
+
+.marquee-container:hover .marquee-content {
+  animation-play-state: paused;
+}
+
+/* Live Pulse Ring */
+.live-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #00ff88;
+  display: inline-block;
+  animation: livePulseDot 1.5s infinite;
+  box-shadow: 0 0 10px #00ff88;
+}
+
+/* Grid Background Texture */
+.bg-cyber-grid {
+  background-image: 
+    linear-gradient(to right, rgba(26, 32, 48, 0.35) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(26, 32, 48, 0.35) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Hologram Overlay */
+.scanline-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    rgba(18, 20, 28, 0) 50%, 
+    rgba(0, 242, 254, 0.02) 50%
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dark-abyss);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #252d42;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 242, 254, 0.2);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-cyan);
+  box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+/* ==========================================
+   3. GAMERFLICK COIN REWARDS & URGENCY STYLES
+   ========================================== */
+
+@keyframes coinShine {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.08) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+@keyframes goldPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(245, 166, 35, 0.4), 0 0 30px rgba(245, 166, 35, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(245, 166, 35, 0.7), 0 0 50px rgba(245, 166, 35, 0.35);
+  }
+}
+
+.coin-shimmer {
+  display: inline-block;
+  animation: coinShine 3s ease-in-out infinite;
+}
+
+.glow-gold-pulse {
+  animation: goldPulse 2s infinite ease-in-out;
+}
+
+/* Filling Fast Urgent Badge */
+@keyframes urgencyPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+}
+
+.urgency-badge {
+  animation: urgencyPulse 1.8s infinite ease-in-out;
+}
+
+/* Neon Progress Bar */
+.progress-bar-neon {
+  background: linear-gradient(90deg, #00f2fe 0%, #7928ca 50%, #ff007f 100%);
+  box-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-bar-neon::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: buttonSweep 1.5s infinite;
+}
+
+/* ==========================================
+   4. GAMER FONTS & CYBER TYPOGRAPHY
+   ========================================== */
+.font-orbitron { font-family: 'Orbitron', 'Chakra Petch', sans-serif; }
+.font-rajdhani { font-family: 'Rajdhani', 'Chakra Petch', sans-serif; }
+.font-chakra { font-family: 'Chakra Petch', 'Rajdhani', sans-serif; }
+.font-exo { font-family: 'Exo 2', 'Rajdhani', sans-serif; }
+.font-russo { font-family: 'Russo One', 'Orbitron', sans-serif; }
+
+/* Metallic Chrome & Neon Text Gradients */
+.text-gradient-cyan-gold {
+  background: linear-gradient(135deg, #00f2fe 0%, #00ffcc 40%, #f5a623 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-fire {
+  background: linear-gradient(135deg, #ff007f 0%, #ff5e3a 50%, #f5a623 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-chrome {
+  background: linear-gradient(180deg, #ffffff 0%, #a6b8cf 50%, #50617a 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==========================================
+   5. GRAND HEADER COVER & CINEMATIC BACKDROP
+   ========================================== */
+.header-grand-cover {
+  position: relative;
+  background-color: #07080c;
+  background-image: 
+    radial-gradient(ellipse at 50% -20%, rgba(0, 242, 254, 0.22) 0%, rgba(121, 40, 202, 0.18) 45%, rgba(7, 8, 12, 0.95) 100%),
+    linear-gradient(180deg, rgba(7, 8, 12, 0.4) 0%, rgba(7, 8, 12, 0.95) 100%),
+    url('https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1920&auto=format&fit=crop&q=80');
+  background-size: cover;
+  background-position: center 25%;
+  background-repeat: no-repeat;
+  border-bottom: 1px solid rgba(0, 242, 254, 0.25);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 242, 254, 0.15);
+}
+
+.header-grand-cover::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(0, 242, 254, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 242, 254, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.header-grand-cover::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #00f2fe, #7928ca, #ff007f, #00f2fe, transparent);
+  animation: buttonSweep 4s linear infinite;
+}
+
+/* Cyber Clock Widget */
+.cyber-clock-badge {
+  font-family: 'Rajdhani', monospace;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  background: rgba(10, 13, 20, 0.85);
+  border: 1px solid rgba(0, 242, 254, 0.3);
+  box-shadow: inset 0 0 10px rgba(0, 242, 254, 0.15);
+}
+
+/* ==========================================
+   6. NEWS & MEDIA SECTION STYLES
+   ========================================== */
+.news-media-backdrop {
+  background-color: #05070a;
+  background-image: 
+    radial-gradient(circle at 75% 50%, rgba(245, 166, 35, 0.12) 0%, transparent 60%),
+    linear-gradient(90deg, rgba(5, 7, 10, 0.98) 0%, rgba(5, 7, 10, 0.82) 50%, rgba(5, 7, 10, 0.95) 100%),
+    url('https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1600&auto=format&fit=crop&q=80');
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.news-media-backdrop::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #f5a623, transparent);
+}
+
+.news-item-channel {
+  transition: all 0.25s ease;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.news-item-channel:hover {
+  background: rgba(245, 166, 35, 0.06);
+  padding-left: 0.75rem;
+}
+
+/* ==========================================
+   7. PLATFORM RESOURCES ORBITAL HUB
+   ========================================== */
+.orbit-cycle-grid {
+  position: relative;
+}
+
+.orbit-center-node {
+  background: radial-gradient(circle, rgba(121, 40, 202, 0.5) 0%, rgba(15, 18, 27, 0.95) 70%);
+  border: 2px solid rgba(0, 242, 254, 0.5);
+  box-shadow: 0 0 35px rgba(0, 242, 254, 0.35), inset 0 0 25px rgba(121, 40, 202, 0.4);
+}
+
+.orbit-node-card {
+  background: rgba(15, 18, 27, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border-radius: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+.orbit-node-card:hover {
+  transform: translateY(-5px) scale(1.03);
+  border-color: #00f2fe;
+  box-shadow: 0 12px 30px rgba(0, 242, 254, 0.25);
+}
+
+/* ==========================================
+   8. SKYLINE FOOTER & GALLERY
+   ========================================== */
+.footer-skyline-wrap {
+  position: relative;
+  background-color: #050609;
+  overflow: hidden;
+}
+
+.footer-skyline-bg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 280px;
+  background: 
+    linear-gradient(180deg, transparent 0%, rgba(5, 6, 9, 0.85) 60%, #050609 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 240' preserveAspectRatio='none'%3E%3Cpath fill='%2310141f' opacity='0.7' d='M0 240 L0 180 L30 180 L30 150 L60 150 L60 190 L90 190 L90 130 L110 130 L110 90 L125 40 L140 90 L140 130 L170 130 L170 180 L200 180 L200 120 L230 120 L230 200 L260 200 L260 160 L290 160 L290 100 L320 100 L320 170 L350 170 L350 130 L380 130 L380 70 L400 30 L420 70 L420 130 L450 130 L450 190 L480 190 L480 140 L510 140 L510 180 L540 180 L540 110 L580 110 L580 190 L610 190 L610 150 L640 150 L640 80 L660 40 L680 80 L680 150 L710 150 L710 190 L750 190 L750 130 L780 130 L780 170 L820 170 L820 100 L850 100 L850 180 L880 180 L880 120 L910 120 L910 60 L930 20 L950 60 L950 120 L980 120 L980 190 L1020 190 L1020 140 L1060 140 L1060 180 L1100 180 L1100 110 L1140 110 L1140 170 L1170 170 L1170 140 L1200 140 L1200 240 Z'/%3E%3Cpath fill='%23192033' opacity='0.9' d='M0 240 L0 200 L40 200 L40 170 L70 170 L70 210 L120 210 L120 150 L150 150 L150 200 L190 200 L190 160 L230 160 L230 210 L280 210 L280 140 L310 140 L310 190 L360 190 L360 120 L400 120 L400 200 L440 200 L440 160 L490 160 L490 210 L530 210 L530 150 L570 150 L570 190 L620 190 L620 130 L660 130 L660 210 L700 210 L700 170 L740 170 L740 210 L790 210 L790 140 L830 140 L830 200 L870 200 L870 150 L920 150 L920 210 L960 210 L960 170 L1000 170 L1000 200 L1050 200 L1050 130 L1100 130 L1100 190 L1150 190 L1150 160 L1200 160 L1200 240 Z'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  background-position: bottom center;
+  background-size: 1200px 240px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.gallery-grid-thumb {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.gallery-grid-thumb img {
+  transition: transform 0.4s ease;
+}
+
+.gallery-grid-thumb:hover {
+  border-color: #f5a623;
+  box-shadow: 0 0 15px rgba(245, 166, 35, 0.4);
+}
+
+.gallery-grid-thumb:hover img {
+  transform: scale(1.12);
+}
+
+/* In-Page Footer Scroll to Top (Only at bottom of page) */
+.footer-scroll-top-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 28px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, #f5a623 0%, #ff5e3a 100%);
+  color: #07080c;
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  box-shadow: 0 8px 25px rgba(245, 166, 35, 0.4);
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s ease;
+}
+
+.footer-scroll-top-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(245, 166, 35, 0.7);
+}
+
+.footer-scroll-top-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* ==========================================
+   RIGHT NAV: GAMER HUB DRAWER & BACKDROP
+   ========================================== */
+#side-menu-drawer {
+  position: fixed !important;
+  right: 12px !important;
+  left: auto !important;
+  top: calc(var(--arena-top-offset, 88px) + 12px) !important;
+  bottom: auto !important;
+  width: 380px !important;
+  max-width: calc(100vw - 24px) !important;
+  height: auto !important;
+  max-height: calc(100vh - var(--arena-top-offset, 88px) - 24px) !important;
+  background: rgba(7, 9, 16, 0.88) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1px solid rgba(0, 242, 254, 0.35) !important;
+  border-radius: 24px !important;
+  box-shadow: -15px 20px 50px rgba(0, 0, 0, 0.9), 0 0 30px rgba(0, 242, 254, 0.2) !important;
+  z-index: 99998 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  transform: translateX(calc(100% + 24px)) !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease !important;
+}
+
+#side-menu-drawer.drawer-open {
+  transform: translateX(0%) !important;
+}
+
+#side-menu-drawer-body {
+  overflow-y: auto !important;
+  max-height: calc(100vh - var(--arena-top-offset, 88px) - 130px) !important;
+}
+
+#side-menu-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 99997 !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#side-menu-backdrop.backdrop-open {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+#left-nav-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: rgba(0, 0, 0, 0.8) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  z-index: 99994 !important;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+#left-nav-backdrop.backdrop-open {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(7, 8, 12, 0.6);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 242, 254, 0.3);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 242, 254, 0.6);
+}
+
+/* ==========================================
+   9. BULLETPROOF RESPONSIVE MODAL SYSTEM
+   Preserves aspect ratio, prevents top-scroll clipping,
+   and ensures the close button is ALWAYS reachable on resize / minimize-restore
+   ========================================== */
+
+/* Universal Modal Backdrop & Container */
+.fixed.inset-0[id^="modal-"],
+.nexus-modal-wrapper {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100dvh !important;
+  max-width: 100vw !important;
+  max-height: 100dvh !important;
+  z-index: 99990 !important;
+  display: flex !important;
+  align-items: flex-start !important; /* Prevents symmetric negative coordinate clipping */
+  justify-content: center !important;
+  padding: clamp(0.5rem, 2vh, 1.5rem) clamp(0.5rem, 2vw, 1.5rem) !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch;
+  background-color: rgba(3, 5, 8, 0.88) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  box-sizing: border-box !important;
+}
+
+/* When hidden, strictly hide */
+.fixed.inset-0[id^="modal-"].hidden,
+.nexus-modal-wrapper.hidden,
+.hidden {
+  display: none !important;
+}
+
+/* Modal Cards: Strict viewport clamping and scroll preservation */
+.fixed.inset-0[id^="modal-"] > div:first-child,
+.nexus-modal-card {
+  margin: auto !important; /* CRITICAL: 'margin: auto' in flex containers centers when smaller, aligns to top without clipping when taller */
+  min-width: 0 !important; /* Allows flex item to shrink below content width */
+  min-height: 0 !important;
+  max-height: min(calc(100dvh - 2rem), 90dvh) !important;
+  max-width: min(calc(100vw - 2rem), var(--modal-max-w, 36rem)) !important;
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  transform: translateZ(0); /* Hardware acceleration, eliminates reflow jitter */
+  overscroll-behavior: contain;
+}
+
+/* Custom Max-Widths per Modal type */
+#modal-login > div:first-child { --modal-max-w: 28rem !important; }
+#modal-link-account > div:first-child { --modal-max-w: 30rem !important; }
+#modal-otp > div:first-child { --modal-max-w: 26rem !important; }
+#modal-2fa-setup > div:first-child { --modal-max-w: 30rem !important; }
+#modal-wallet > div:first-child { --modal-max-w: 34rem !important; }
+#modal-register > div:first-child { --modal-max-w: 34rem !important; }
+#modal-create-tournament > div:first-child { --modal-max-w: 42rem !important; }
+#modal-bracket > div:first-child { --modal-max-w: 70rem !important; }
+#modal-roster > div:first-child { --modal-max-w: 38rem !important; }
+#modal-support > div:first-child { --modal-max-w: 42rem !important; }
+#modal-report-score > div:first-child { --modal-max-w: 32rem !important; }
+#modal-upload-clip > div:first-child { --modal-max-w: 32rem !important; }
+#modal-postpone > div:first-child { --modal-max-w: 30rem !important; }
+#modal-add-game > div:first-child { --modal-max-w: 32rem !important; }
+#modal-resolve-ticket > div:first-child { --modal-max-w: 34rem !important; }
+
+/* Internal Wide Containers (Bracket Tree, Tables) must never force parent expansion */
+#bracket-tree-container,
+.modal-table-container,
+.modal-scroll-area {
+  min-width: 0 !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Responsive viewport adaptations */
+@media (max-height: 700px) {
+  .fixed.inset-0[id^="modal-"] > div:first-child {
+    max-height: 94dvh !important;
+    padding: 1rem 1.25rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .fixed.inset-0[id^="modal-"] > div:first-child {
+    max-width: calc(100vw - 1rem) !important;
+    margin: auto !important;
+    padding: 1rem 1.25rem !important;
+  }
+}
+
+/* Universal Enhanced Close Button: Pinned to upper right, guaranteed reachable */
+.modal-close-btn,
+.fixed.inset-0[id^="modal-"] button[onclick*="closeModal"] {
+  position: absolute !important;
+  top: clamp(0.6rem, 1.8vh, 1.25rem) !important;
+  right: clamp(0.6rem, 1.8vw, 1.25rem) !important;
+  z-index: 99999 !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  min-height: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 9999px !important;
+  background: rgba(15, 18, 27, 0.95) !important;
+  border: 1px solid rgba(0, 242, 254, 0.6) !important;
+  color: #a6b8cf !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.9), 0 0 12px rgba(0, 242, 254, 0.35) !important;
+  cursor: pointer !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.modal-close-btn:hover,
+.fixed.inset-0[id^="modal-"] button[onclick*="closeModal"]:hover {
+  background: rgba(255, 0, 127, 0.35) !important;
+  border-color: #ff007f !important;
+  color: #ffffff !important;
+  transform: scale(1.1) rotate(90deg) !important;
+  box-shadow: 0 0 20px rgba(255, 0, 127, 0.8) !important;
+}
+
+/* Gatekeeper Barrier: Hide close button and lock modal dismissal */
+#modal-login[data-gatekeeper="true"] .modal-close-btn,
+#modal-login[data-gatekeeper="true"] button[onclick*="closeModal"] {
+  display: none !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* Guest Mode Persistent Top Banner */
+#guest-active-banner {
+  background: linear-gradient(90deg, rgba(69, 26, 3, 0.95) 0%, rgba(15, 18, 27, 0.98) 50%, rgba(59, 7, 100, 0.95) 100%);
+  border-bottom: 1px solid rgba(245, 166, 35, 0.45);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(245, 166, 35, 0.15);
+}
+
+/* Video Player Modal Specific Aspect Ratio Lock */
+#modal-video-player > div {
+  max-height: min(640px, 90dvh) !important;
+  height: auto !important;
+  aspect-ratio: 9 / 16;
+  max-width: min(380px, 92vw) !important;
+}
+
+/* =========================================================
+   10. SPLIT-SCREEN GAMING ENVIRONMENT GATEWAY (FACEBOOK-STYLE UX)
+   ========================================================= */
+
+#gateway-landing-view {
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: radial-gradient(circle at 15% 25%, rgba(13, 20, 38, 0.98) 0%, #07080c 65%, #030407 100%);
+  position: relative;
+  z-index: 30;
+  overflow-x: hidden;
+}
+
+#gateway-landing-view.hidden,
+#main-arena-app.hidden {
+  display: none !important;
+}
+
+/* Floating Animations for Gaming Environment */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(0.8deg);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(10px) rotate(-0.8deg);
+  }
+}
+
+@keyframes pulseReaction {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 15px currentColor;
+  }
+  50% {
+    transform: scale(1.12);
+    box-shadow: 0 0 25px currentColor;
+  }
+}
+
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: floatReverse 5s ease-in-out infinite;
+}
+
+.animate-pulse-reaction {
+  animation: pulseReaction 3s ease-in-out infinite;
+}
+
+/* Landing Floating Card Glassmorphism */
+.landing-glass-card {
+  background: rgba(15, 18, 27, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 242, 254, 0.25);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(0, 242, 254, 0.15);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing-glass-card:hover {
+  border-color: rgba(0, 242, 254, 0.5);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.85), 0 0 30px rgba(0, 242, 254, 0.3);
+  transform: translateY(-4px);
+}
+
+/* Reaction Bubble Badges */
+.reaction-bubble {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.8);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  z-index: 25;
+}
+
+/* Cyber Scan Laser Beam & HUD Spin */
+@keyframes cyberScan {
+  0% { top: 0%; opacity: 0; }
+  15% { opacity: 0.9; }
+  85% { opacity: 0.9; }
+  100% { top: 100%; opacity: 0; }
+}
+
+.animate-cyber-scan {
+  animation: cyberScan 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes hudSpinSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-hud-spin {
+  animation: hudSpinSlow 24s linear infinite;
+}
+
+.glow-emerald {
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.45);
+}
+
+/* ==========================================
+   20. DUAL NAVIGATION & CYBER SIDEBAR STYLES
+   ========================================== */
+
+/* Left Sidebar Collapsed & Expanded States */
+:root {
+  --arena-top-offset: 88px;
+}
+
+#left-nav-sidebar {
+  position: fixed !important;
+  left: 12px !important;
+  top: calc(var(--arena-top-offset, 88px) + 12px) !important;
+  bottom: auto !important;
+  height: auto !important;
+  max-height: calc(100vh - var(--arena-top-offset, 88px) - 24px) !important;
+  background: rgba(7, 9, 16, 0.84) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(0, 242, 254, 0.35) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.85), 0 0 25px rgba(0, 242, 254, 0.15) !important;
+  z-index: 35 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, top 0.15s ease !important;
+}
+
+#left-nav-sidebar.collapsed {
+  width: 68px !important;
+}
+
+#left-nav-sidebar.expanded {
+  width: 275px !important;
+}
+
+/* =========================================================
+   COLLAPSED SIDEBAR: STRICT ICON & SYMBOL ONLY MODE
+   Removes truncated text, centers 36px icons & symbols cleanly
+   ========================================================= */
+
+#left-nav-sidebar.collapsed .sidebar-header-label,
+#left-nav-sidebar.collapsed .sidebar-item-content {
+  display: none !important;
+}
+
+#left-nav-sidebar.collapsed .sidebar-header-row {
+  justify-content: center !important;
+  padding: 0 0 8px 0 !important;
+}
+
+#left-nav-sidebar.collapsed .sidebar-header-symbol {
+  display: none !important;
+}
+
+#left-nav-sidebar.collapsed .sidebar-header-actions {
+  margin-left: 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+#left-nav-sidebar.collapsed .sidebar-header-actions button {
+  margin: 0 auto !important;
+  width: 36px !important;
+  height: 36px !important;
+}
+
+#left-nav-sidebar.collapsed .sidebar-nav-item {
+  justify-content: center !important;
+  padding: 6px !important;
+}
+
+#left-nav-sidebar.collapsed .sidebar-profile-card {
+  justify-content: center !important;
+  padding: 8px 4px !important;
+  position: relative !important;
+}
+
+#left-nav-sidebar.collapsed .sidebar-profile-card .sidebar-avatar-wrap {
+  margin: 0 auto !important;
+}
+
+/* Tooltip on Collapsed Sidebar Profile Card and Header Actions */
+#left-nav-sidebar.collapsed .sidebar-profile-card:hover .sidebar-tooltip,
+#left-nav-sidebar.collapsed .sidebar-profile-card:focus-within .sidebar-tooltip,
+#left-nav-sidebar.collapsed .sidebar-profile-card.active-touch .sidebar-tooltip,
+#left-nav-sidebar.collapsed .sidebar-header-actions button:hover .sidebar-tooltip,
+#left-nav-sidebar.collapsed .sidebar-header-actions button:focus .sidebar-tooltip {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: translateY(-50%) translateX(16px) !important;
+}
+
+/* On mobile (< 768px), Left Nav is a slide-in floating cyber card when opened */
+@media (max-width: 767.98px) {
+  #left-nav-sidebar {
+    left: 12px !important;
+    top: calc(var(--arena-top-offset, 80px) + 8px) !important;
+    max-height: calc(100vh - var(--arena-top-offset, 80px) - 20px) !important;
+    transform: translateX(calc(-100% - 24px)) !important;
+    z-index: 99995 !important;
+    border-radius: 22px !important;
+  }
+  #left-nav-sidebar.collapsed {
+    width: 68px !important;
+  }
+  #left-nav-sidebar.expanded {
+    width: min(300px, calc(100vw - 24px)) !important;
+  }
+  #left-nav-sidebar.mobile-open {
+    transform: translateX(0%) !important;
+    display: flex !important;
+    width: min(300px, calc(100vw - 24px)) !important;
+  }
+  #left-nav-sidebar.mobile-open .sidebar-header-label,
+  #left-nav-sidebar.mobile-open .sidebar-item-content {
+    display: flex !important;
+  }
+  #left-nav-sidebar.mobile-open .sidebar-header-symbol {
+    display: flex !important;
+  }
+  #left-nav-sidebar.mobile-open .sidebar-header-row {
+    justify-content: space-between !important;
+    padding: 0 0 8px 0 !important;
+  }
+  #left-nav-sidebar.mobile-open .sidebar-nav-item {
+    justify-content: flex-start !important;
+  }
+}
+
+@media (min-width: 768px) {
+  #left-nav-sidebar {
+    transform: none !important;
+  }
+}
+
+/* Tooltip on Collapsed Sidebar Items */
+.sidebar-nav-item {
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.sidebar-nav-item.active {
+  background: linear-gradient(135deg, rgba(0, 242, 254, 0.22), rgba(15, 18, 27, 0.95)) !important;
+  border-color: rgba(0, 242, 254, 0.8) !important;
+  box-shadow: 0 0 18px rgba(0, 242, 254, 0.35) !important;
+}
+
+.sidebar-nav-item.active .sidebar-item-content span {
+  color: #00f2fe !important;
+}
+
+.sidebar-tooltip {
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%) translateX(12px);
+  background: rgba(7, 9, 15, 0.96);
+  border: 1px solid rgba(0, 242, 254, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 18px rgba(0, 242, 254, 0.35);
+  border-radius: 12px;
+  padding: 8px 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+
+.sidebar-tooltip::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: transparent rgba(0, 242, 254, 0.5) transparent transparent;
+}
+
+/* Show tooltip when sidebar is in collapsed state */
+#left-nav-sidebar.collapsed .sidebar-nav-item:hover .sidebar-tooltip,
+#left-nav-sidebar.collapsed .sidebar-nav-item:focus-within .sidebar-tooltip,
+#left-nav-sidebar.collapsed .sidebar-nav-item.active-touch .sidebar-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(16px);
+}
+
+/* When expanded, hide the floating tooltip */
+#left-nav-sidebar.expanded .sidebar-tooltip {
+  display: none !important;
+}
+
+/* Mobile Slide-Down Top Menu */
+#mobile-top-slidedown-menu {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 99990 !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+}
+
+#mobile-top-slidedown-menu.open {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+#mobile-top-slidedown-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99980 !important;
+  background-color: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+#mobile-top-slidedown-backdrop.open {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Mobile Persistent Bottom Navigation Dock (< md screens) */
+#mobile-bottom-dock {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  z-index: 45 !important;
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.85);
+}
+
+.bottom-dock-btn {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bottom-dock-btn:active {
+  transform: scale(0.92);
+}
+
+/* Tactical Sleek Logout Icon Button */
+.logout-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(15, 18, 27, 0.95));
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.logout-icon-btn:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.95), rgba(219, 39, 119, 0.95));
+  border-color: #fca5a5;
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.5), 0 0 35px rgba(219, 39, 119, 0.3);
+  transform: scale(1.08);
+}
+
+.logout-icon-btn:active {
+  transform: scale(0.92);
+}
+
+.logout-icon-btn i {
+  transition: transform 0.25s ease;
+}
+
+.logout-icon-btn:hover i {
+  transform: rotate(15deg);
+}
+
+.logout-tooltip {
+  position: absolute;
+  bottom: 115%;
+  right: 0;
+  background: rgba(7, 8, 12, 0.96);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateY(4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+  z-index: 60;
+}
+
+.logout-icon-btn:hover .logout-tooltip,
+.logout-icon-btn:focus .logout-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Header Right Nav specific sizing and downward-oriented tooltip */
+.logout-icon-btn.header-logout-icon-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+}
+
+@media (min-width: 640px) {
+  .logout-icon-btn.header-logout-icon-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+  }
+}
+
+.logout-icon-btn.header-logout-icon-btn .logout-tooltip {
+  top: 125%;
+  bottom: auto;
+  right: 0;
+  transform: translateY(-4px);
+}
+.logout-icon-btn.header-logout-icon-btn:hover .logout-tooltip,
+.logout-icon-btn.header-logout-icon-btn:focus .logout-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================================
+   HERO WAVE — Full-Bleed 3D WebGL Particle Wave Background
+   (Faithful port from alldeputations.com for Gateway Login View)
+   ============================================================ */
+.bg-wave {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 5 !important;
+  pointer-events: none !important;
+  display: block !important;
+}
+
+#gateway-landing-view {
+  background-color: #07080c !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 30 !important;
+}
+
+#gateway-landing-view .landing-glass-card {
+  background: rgba(15, 18, 27, 0.78) !important;
+  backdrop-filter: blur(24px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(160%) !important;
+  border: 1px solid rgba(0, 242, 254, 0.35) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 242, 254, 0.15) !important;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#gateway-landing-view .landing-glass-card:hover {
+  border-color: rgba(0, 242, 254, 0.55) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 45px rgba(0, 242, 254, 0.25) !important;
+}
+
+/* ============================================================
+   BILLDESK & RECHARGE ACCOUNT PAYMENT STRUCTURE (PHOTOS 1-4)
+   ============================================================ */
+
+/* 1. Recharge Account Screen (Photo 2) */
+.recharge-account-card {
+  background: #0d1322 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 24px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+.recharge-quick-tile {
+  background: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 14px !important;
+  transition: all 0.2s ease !important;
+}
+
+.recharge-quick-tile:hover {
+  border-color: #10b981 !important;
+  color: #10b981 !important;
+  transform: translateY(-1px) !important;
+}
+
+.recharge-quick-tile.active {
+  background: rgba(16, 185, 129, 0.18) !important;
+  border-color: #10b981 !important;
+  color: #10b981 !important;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.45) !important;
+}
+
+.recharge-input-box {
+  background: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 14px !important;
+  transition: border-color 0.2s ease !important;
+}
+
+.recharge-input-box:focus-within {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25) !important;
+}
+
+/* Swipe to Recharge Slider Button */
+.swipe-recharge-track {
+  background: linear-gradient(90deg, #064e3b 0%, #059669 50%, #0d9488 100%) !important;
+  border: 1px solid rgba(16, 185, 129, 0.45) !important;
+  border-radius: 9999px !important;
+  height: 56px !important;
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  user-select: none !important;
+  touch-action: none !important;
+  box-shadow: 0 8px 24px rgba(5, 150, 105, 0.35) !important;
+  cursor: pointer !important;
+}
+
+.swipe-recharge-thumb {
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 9999px !important;
+  background: #061118 !important;
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  position: absolute !important;
+  left: 5px !important;
+  top: 5px !important;
+  cursor: grab !important;
+  touch-action: none !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6) !important;
+  transition: transform 0.15s ease-out, background-color 0.2s ease;
+  z-index: 2 !important;
+}
+
+.swipe-recharge-thumb:active {
+  cursor: grabbing !important;
+  transform: scale(0.97);
+}
+
+.swipe-recharge-label {
+  width: 100% !important;
+  text-align: center !important;
+  color: #ffffff !important;
+  font-family: 'Orbitron', 'Rajdhani', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.12em !important;
+  text-transform: uppercase !important;
+  pointer-events: none !important;
+  padding-left: 20px !important;
+}
+
+/* 2. BillDesk Secure Payment Screen (Photos 1 & 4) */
+.billdesk-sheet {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-radius: 28px !important;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.45), 0 0 40px rgba(255, 255, 255, 0.1) !important;
+}
+
+.billdesk-order-card {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 18px !important;
+}
+
+.billdesk-method-row {
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  background: #ffffff !important;
+  transition: all 0.2s ease !important;
+  overflow: hidden !important;
+}
+
+.billdesk-method-row:hover {
+  border-color: #cbd5e1 !important;
+}
+
+.billdesk-method-header {
+  padding: 14px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  cursor: pointer !important;
+  background: #ffffff !important;
+}
+
+.billdesk-method-header:hover {
+  background: #f8fafc !important;
+}
+
+.billdesk-sub-option {
+  padding: 12px 14px !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 12px !important;
+  background: #f8fafc !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.billdesk-sub-option:hover {
+  background: #ffffff !important;
+  border-color: #0284c7 !important;
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.12) !important;
+}
+
+/* 3. UPI 5-Minute Timer & Open With Modal (Photo 3) */
+.upi-timer-circle {
+  position: relative !important;
+  width: 130px !important;
+  height: 130px !important;
+  margin: 0 auto !important;
+}
+
+.upi-timer-svg {
+  transform: rotate(-90deg) !important;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.upi-timer-bg-circle {
+  fill: none !important;
+  stroke: #e2e8f0 !important;
+  stroke-width: 7 !important;
+}
+
+.upi-timer-progress-circle {
+  fill: none !important;
+  stroke: #10b981 !important;
+  stroke-width: 7 !important;
+  stroke-linecap: round !important;
+  stroke-dasharray: 345 !important;
+  stroke-dashoffset: 0 !important;
+  transition: stroke-dashoffset 1s linear !important;
+}
+
+.upi-timer-content {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.upi-open-with-sheet {
+  background: #1e2433 !important;
+  border-radius: 20px !important;
+  padding: 18px !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45) !important;
+}
+
+.upi-app-button {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 10px 14px !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.upi-app-button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  transform: translateY(-2px) !important;
+}
+
+.billdesk-sheet input {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.billdesk-sheet input:focus {
+  border-color: #0284c7 !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
+}

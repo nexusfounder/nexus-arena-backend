@@ -1,0 +1,282 @@
+[
+  {
+    "domain": "System Infrastructure",
+    "feature": "Healthcheck (/api/health)",
+    "description": "Returns 200 OK, database connected and healthy",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 68.06
+  },
+  {
+    "domain": "Regulatory Compliance",
+    "feature": "RBI Disclosures",
+    "description": "Mandatory CIN, Grievance Officer and Data Localization in Mumbai",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 4.0
+  },
+  {
+    "domain": "Banking Engine",
+    "feature": "Ledger Invariant Audit",
+    "description": "Zero balance drift, Sum(Debits) == Sum(Credits), zero negative wallets",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 7.04
+  },
+  {
+    "domain": "Authentication",
+    "feature": "User Registration (Verification Wall)",
+    "description": "Registers new user into PENDING_VERIFICATION and issues single-use OTP",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 162.94
+  },
+  {
+    "domain": "Security Defense",
+    "feature": "Anti-Enumeration Defense",
+    "description": "Returns uniform generic response preventing attacker account discovery",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 12.63
+  },
+  {
+    "domain": "Authentication",
+    "feature": "Unverified Account Login Block",
+    "description": "Enforces verification wall; unverified users cannot login",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 72.03
+  },
+  {
+    "domain": "Authentication",
+    "feature": "Account Activation via OTP",
+    "description": "Validates 6-digit OTP, activates account to ACTIVE and returns JWT",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 80.84
+  },
+  {
+    "domain": "Authentication",
+    "feature": "Wrong Password Rejection",
+    "description": "Strict rejection on invalid password with brute-force tracking",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 70.57
+  },
+  {
+    "domain": "Authentication",
+    "feature": "Valid User Login",
+    "description": "Authenticates verified user and returns valid session JWT",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 60.19
+  },
+  {
+    "domain": "Authentication",
+    "feature": "Case-Insensitive Login",
+    "description": "Supports uppercase mobile keyboards seamlessly",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 61.22
+  },
+  {
+    "domain": "Authorization",
+    "feature": "Master Admin Login",
+    "description": "Authenticates master admin and grants executive privileges",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 58.93
+  },
+  {
+    "domain": "Identity Verification",
+    "feature": "SMS OTP Dispatch",
+    "description": "Dispatches telecom OTP with rate limiting defense",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 97.55
+  },
+  {
+    "domain": "Banking Engine",
+    "feature": "Transaction Ledger Query",
+    "description": "Returns immutable ledger records (1 initial entries)",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 18.44
+  },
+  {
+    "domain": "Payment Gateway",
+    "feature": "Order Creation",
+    "description": "Generates UPI Intent and dynamic QR Code order in INR",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 8.01
+  },
+  {
+    "domain": "Banking Engine",
+    "feature": "HMAC Webhook & Deposit Credit",
+    "description": "Verifies HMAC signature and atomically credits INR 1000 to user wallet",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 77.01
+  },
+  {
+    "domain": "Security Defense",
+    "feature": "Fraudulent Signature Block",
+    "description": "Strictly rejects invalid cryptographic signatures and logs anomaly",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 8.37
+  },
+  {
+    "domain": "Virtual Economy",
+    "feature": "Coin Pack Purchase",
+    "description": "Debits INR 119 from cash wallet to platform revenue and credits 1,500 coins",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 89.67
+  },
+  {
+    "domain": "Financial Safeguard",
+    "feature": "Negative Balance Prevention",
+    "description": "Strictly blocks purchases exceeding wallet balance",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 10.15
+  },
+  {
+    "domain": "Games Catalog",
+    "feature": "Catalog Query",
+    "description": "Returns 13 official game titles including BGMI and Valorant",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 6.83
+  },
+  {
+    "domain": "Access Control",
+    "feature": "Non-Admin Tournament Block",
+    "description": "Standard players cannot create official tournaments (403 Forbidden)",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 8.7
+  },
+  {
+    "domain": "Tournament Engine",
+    "feature": "Tournament Creation & Prize Escrow",
+    "description": "Admin creates 4-player Single Elimination tournament with INR 500 prize pool",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 92.15
+  },
+  {
+    "domain": "Tournament Engine",
+    "feature": "Player Tournament Registration",
+    "description": "Players join tournament; entry fees debited to platform escrow",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 208.57
+  },
+  {
+    "domain": "Tournament Engine",
+    "feature": "Bracket Generation",
+    "description": "Starts tournament and generates single-elimination match bracket",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 87.26
+  },
+  {
+    "domain": "Tournament Engine",
+    "feature": "Match Reporting & Escrow Payout",
+    "description": "Winner reported (13-9), Grand Final completed and INR 500 prize credited",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 88.04
+  },
+  {
+    "domain": "Social Hub",
+    "feature": "Social Account Linking",
+    "description": "Binds verified Discord handle to player profile",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 83.32
+  },
+  {
+    "domain": "Gamification",
+    "feature": "Daily Quests",
+    "description": "Returns 5 active daily/weekly esports quests",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 11.02
+  },
+  {
+    "domain": "Support System",
+    "feature": "Ticket Submission",
+    "description": "Submits support ticket #TICK-13279",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 76.48
+  },
+  {
+    "domain": "Admin Operations",
+    "feature": "Ticket Resolution",
+    "description": "Admin resolves ticket and updates ticket status",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 108.82
+  },
+  {
+    "domain": "Leaderboard",
+    "feature": "Live Rankings",
+    "description": "Returns 7 official ranked tournament players",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 15.66
+  },
+  {
+    "domain": "Admin Governance",
+    "feature": "User Directory Query",
+    "description": "Lists all platform users (8 users found)",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 10.0
+  },
+  {
+    "domain": "Admin Governance",
+    "feature": "Account Suspension",
+    "description": "Admin successfully suspends user account and logs audit entry",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 86.85
+  },
+  {
+    "domain": "Security Safeguard",
+    "feature": "Master Admin Immunity",
+    "description": "Strictly rejects suspension of 'admin' account with 400",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 8.65
+  },
+  {
+    "domain": "Admin Governance",
+    "feature": "Account Reinstatement",
+    "description": "Admin reinstates user account back to ACTIVE status",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 83.97
+  },
+  {
+    "domain": "Role-Based Access Control",
+    "feature": "Role Promotion",
+    "description": "Promotes user to CO_ADMIN with executive delegation",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 102.81
+  },
+  {
+    "domain": "Banking Engine",
+    "feature": "Post-Test Ledger Integrity",
+    "description": "All deposits, coin purchases and tournament escrow payouts balanced perfectly",
+    "passed": true,
+    "detail": "",
+    "duration_ms": 19.64
+  }
+]
