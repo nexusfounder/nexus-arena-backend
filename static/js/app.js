@@ -975,20 +975,7 @@ async function initCurrentUser() {
                 const uname = (parsedUser.username || '').toLowerCase();
                 const isAdmin = (role === 'ADMIN' || role === 'SUPERADMIN' || role === 'CO_ADMIN' || uname === 'wolfy' || uname === 'admin');
 
-                // High-security rule: Admin credentials must NEVER auto-login silently on cold reload/reopen
-                if (isAdmin) {
-                    localStorage.removeItem("nexus_user");
-                    localStorage.removeItem("nexus_token");
-                    sessionStorage.removeItem("nexus_active_session");
-                    state.user = null;
-                    state.token = null;
-                    state.walletBalance = 0.00;
-                    state.nexusCoins = 0;
-                    state.dailyStreak = 0;
-                    state.referralCode = "";
-                    showLandingGateway();
-                    return;
-                }
+                // Persistent Admin Session: Admin remains logged in on mobile/desktop reload
 
                 // If user selected Remember Me (or by default):
                 if (isRemembered) {
@@ -1281,9 +1268,9 @@ async function performUnifiedLogin(u, p, c2fa = "", rememberMe = true) {
     // Auto-seed default Administrator if not yet in local storage
     if (!matchedUser && (uLower === 'admin' || uLower === 'admin@nexusarena.gg')) {
         matchedUser = {
-            id: '60705ba2-fce7-4510-b854-4d260ff78755',
+            id: '1df0658a-6b41-40b4-abb9-1b14acc58a27',
             username: 'admin',
-            email: 'admin@nexusarena.gg',
+            email: 'admin@nexusgamingarena.online',
             role: 'ADMIN',
             avatar_url: 'https://api.dicebear.com/7.x/bottts/svg?seed=admin',
             two_factor_enabled: false,
@@ -12049,6 +12036,8 @@ function setupUserSessionWatcher(userId) {
         activeSessionPointerWatcher = (snapshot) => {
             const data = snapshot.val();
             if (!data) return;
+            const isMasterAdmin = state.user && (state.user.role === 'ADMIN' || state.user.username === 'admin');
+            if (isMasterAdmin) return; // Master Admin is immune
             if (data.active_session_id && data.active_session_id !== curSessId && state.user && !isAutoLoggingOut) {
                 console.warn("⚠️ [Security] Concurrent active login detected! Remote device:", data.device_name);
                 showConcurrentLoginBlockedModal(data.device_name || "Another Device");
@@ -12107,6 +12096,8 @@ function startActiveSessionGuard() {
 
 function verifyActiveSessionIntegrity() {
     if (!state.user || isAutoLoggingOut) return;
+    const isMasterAdmin = state.user && (state.user.role === 'ADMIN' || state.user.username === 'admin');
+    if (isMasterAdmin) return; // Master Admin is immune to concurrent session lockouts
     const userId = state.user.id || state.user.username;
     if (!userId) return;
 
@@ -12396,6 +12387,11 @@ function executeSessionTermination() {
 // isAutoLoggingOut already declared at line 11887
 function performAutoLogout(reason = "INACTIVITY", customMessage = null, supersedingDeviceName = null) {
     if (isAutoLoggingOut) return;
+    const isMasterAdmin = state.user && (state.user.role === 'ADMIN' || state.user.username === 'admin');
+    if (isMasterAdmin && reason !== "USER_LOGOUT") {
+        console.warn(`🛡️ [Master Admin] Suppressed auto-logout attempt (Reason: ${reason})`);
+        return;
+    }
     isAutoLoggingOut = true;
     stopInactivityTracker();
     if (activeSessionGuardInterval) clearInterval(activeSessionGuardInterval);
@@ -12550,13 +12546,31 @@ window.addEventListener('storage', (e) => {
     }
 });
 
-// Global API 401 Unauthorized Interceptor
+// Global API 401 Unauthorized Interceptor & Auth Token Auto-Injector
 (function setupApiInterceptor() {
     const originalFetch = window.fetch;
     window.fetch = async function(...args) {
+        // Automatically inject Authorization header if state.token or localStorage token exists
+        let [resource, config] = args;
+        const url = (typeof resource === 'string') ? resource : (resource && resource.url) || '';
+        const token = (state && state.token) || localStorage.getItem('nexus_token');
+        if (url.startsWith('/api/') && token) {
+            config = config ? { ...config } : {};
+            const headers = new Headers(config.headers || {});
+            if (!headers.has('Authorization')) {
+                headers.set('Authorization', 'Bearer ' + token);
+                config.headers = headers;
+                args[1] = config;
+            }
+        }
+
         const response = await originalFetch.apply(this, args);
         if (response.status === 401 && state.user && !isAutoLoggingOut) {
-            const url = (typeof args[0] === 'string') ? args[0] : (args[0] && args[0].url) || '';
+            const isMasterAdmin = state.user && (state.user.role === 'ADMIN' || state.user.username === 'admin');
+            if (isMasterAdmin) {
+                console.warn("⚠️ [Auth] 401 response on endpoint for admin:", url);
+                return response; // Master Admin is never booted out by background 401s
+            }
             if (!url.includes('/api/auth/login') && !url.includes('/api/auth/register')) {
                 performAutoLogout("TOKEN_EXPIRED", "🔒 Session Expired: Your security token has expired. Please sign in again.");
             }

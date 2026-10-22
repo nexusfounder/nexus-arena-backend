@@ -9,8 +9,7 @@ PORT = int(os.environ.get("NEXUS_PORT", 8088))
 DEBUG = os.environ.get("NEXUS_DEBUG", "false").strip().lower() == "true"
 
 # Security & Cryptography
-import secrets
-_default_secret = secrets.token_hex(32)
+_default_secret = "nexus_arena_production_master_jwt_secret_key_2026_secured_99a8b7c6"
 SECRET_KEY = os.environ.get("NEXUS_SECRET_KEY") or _default_secret
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_MINUTES = 60 * 24  # 24 hours
