@@ -1170,21 +1170,23 @@ async def create_tournament(req: TournamentCreateRequest, user: Dict[str, Any] =
         org_account_id = get_or_create_user_account(user["id"], conn)
         idempotency_key = f"tournament_escrow_hold_{t_id}"
 
-        try:
-            record_transaction(
-                debit_account_id=org_account_id,
-                credit_account_id=PLATFORM_ESCROW_ACCOUNT_ID,
-                amount_cents=prize_pool_cents,
-                category="ESCROW_HOLD",
-                idempotency_key=idempotency_key,
-                description=f"Prize Pool Escrow for '{req.title}'",
-                check_balance=True
-            )
-        except InsufficientFundsError:
-            raise HTTPException(
-                status_code=400,
-                detail=f"You need at least ${req.prize_pool_dollars:.2f} in your wallet to fund this tournament's prize pool escrow."
-            )
+        is_platform_admin = user.get("role") in ("ADMIN", "SUPERADMIN")
+        if prize_pool_cents > 0:
+            try:
+                record_transaction(
+                    debit_account_id=org_account_id,
+                    credit_account_id=PLATFORM_ESCROW_ACCOUNT_ID,
+                    amount_cents=prize_pool_cents,
+                    category="ESCROW_HOLD",
+                    idempotency_key=idempotency_key,
+                    description=f"Prize Pool Escrow for '{req.title}'",
+                    check_balance=not is_platform_admin
+                )
+            except InsufficientFundsError:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"You need at least ${(req.prize_pool or 0):.2f} in your wallet to fund this tournament's prize pool escrow."
+                )
 
         cursor = conn.cursor()
         lifecycle = "TEASER" if req.is_teaser else "REGISTRATION"
