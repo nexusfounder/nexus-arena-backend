@@ -3247,7 +3247,6 @@ function renderLeaderboard() {
             `;
             podiumContainer.appendChild(card);
         });
-    }
 
     const tbody = document.getElementById('leaderboard-tbody');
     tbody.innerHTML = '';
