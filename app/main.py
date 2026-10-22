@@ -77,6 +77,8 @@ app = FastAPI(
 ALLOWED_ORIGINS = [
     "https://nexus-gaming-arena-28be9.web.app",
     "https://nexus-gaming-arena-28be9.firebaseapp.com",
+    "https://nexusgamingarena.online",
+    "https://www.nexusgamingarena.online",
     "http://localhost:8088",
     "http://127.0.0.1:8088",
     "http://localhost:3000",
