@@ -105,10 +105,17 @@ templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 @app.get("/sw.js")
 def service_worker_route():
-    sw_file = BASE_DIR / "sw.js"
-    if sw_file.exists():
-        return FileResponse(sw_file, media_type="application/javascript")
-    raise HTTPException(status_code=404, detail="Service worker not found.")
+    for candidate in [BASE_DIR / "sw.js", BASE_DIR / "static" / "sw.js"]:
+        if candidate.exists():
+            return FileResponse(candidate, media_type="application/javascript")
+    fallback_sw = (
+        "// Nexus Gaming Arena - PWA Service Worker\n"
+        "const CACHE_NAME = 'nexus-v2';\n"
+        "self.addEventListener('install', e => self.skipWaiting());\n"
+        "self.addEventListener('activate', e => clients.claim());\n"
+        "self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));\n"
+    )
+    return Response(content=fallback_sw, media_type="application/javascript")
 
 # ==========================================
 # 1. SECURITY HEADERS & EXCEPTION SHIELD
