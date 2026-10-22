@@ -54,7 +54,7 @@ from .models import (
     ResetPasswordRequest, AdminSecurityBindingUpdateRequest, LinkGuestRequest,
     AdminCredentialsUpdateRequest,
     StripeChargeTokenRequest, BuyCoinsRequest,
-    RBIPaymentOrderCreateRequest, RBIPaymentVerifyRequest
+    RBIPaymentOrderCreateRequest, RBIPaymentVerifyRequest, GoogleAuthRequest
 )
 from .rbi_compliance import (
     DATA_LOCALIZATION_REGION, MANDATORY_DISCLOSURES,
@@ -553,6 +553,85 @@ def link_guest_user(req: LinkGuestRequest, user: Dict[str, Any] = Depends(get_cu
         return {"status": "SUCCESS", "message": "Guest account successfully linked to permanent profile!"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    finally:
+        conn.close()
+
+@app.post("/api/auth/google")
+def google_auth_login(req: GoogleAuthRequest, response: Response):
+    email = req.email.strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Google email is required.")
+        
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users WHERE LOWER(email) = ? OR id = ?", (email, req.uid))
+        user = cursor.fetchone()
+
+        now_iso = datetime.now(timezone.utc).isoformat()
+        if user:
+            user_dict = dict(user)
+            if req.photo_url and not user_dict.get("avatar_url"):
+                cursor.execute("UPDATE users SET avatar_url = ? WHERE id = ?", (req.photo_url, user_dict["id"]))
+                conn.commit()
+                user_dict["avatar_url"] = req.photo_url
+        else:
+            raw_name = (req.display_name or email.split("@")[0]).strip()
+            clean_base = re.sub(r'[^a-zA-Z0-9_]', '', raw_name)[:12] or "Gamer"
+            uname = clean_base
+            counter = 1
+            while True:
+                cursor.execute("SELECT id FROM users WHERE LOWER(username) = ?", (uname.lower(),))
+                if not cursor.fetchone():
+                    break
+                uname = f"{clean_base[:9]}{random.randint(100, 999)}"
+                counter += 1
+                if counter > 20:
+                    uname = f"Gamer{random.randint(1000, 9999)}"
+                    break
+
+            import secrets
+            random_pw = secrets.token_hex(16)
+            pw_hash = hash_password(random_pw)
+            user_id = req.uid or str(uuid.uuid4())
+            avatar = req.photo_url or f"https://api.dicebear.com/7.x/bottts/svg?seed={uname}"
+
+            cursor.execute("""
+            INSERT INTO users (
+                id, username, email, password_hash, role,
+                avatar_url, elo_rating, created_at, status, phone_verified, two_factor_enabled
+            ) VALUES (?, ?, ?, ?, 'PLAYER', ?, 1200, ?, 'ACTIVE', 1, 0)
+            """, (user_id, uname, email, pw_hash, avatar, now_iso))
+            conn.commit()
+
+            get_or_create_user_account(user_id, conn)
+
+            cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+            user_dict = dict(cursor.fetchone())
+
+        token = create_jwt_token({
+            "sub": user_dict["id"],
+            "username": user_dict["username"],
+            "role": user_dict["role"]
+        })
+
+        response.set_cookie(
+            key="nexus_token",
+            value=token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            max_age=86400 * 30
+        )
+
+        user_dict.pop("password_hash", None)
+        user_dict.pop("two_factor_secret", None)
+        return {
+            "status": "SUCCESS",
+            "token": token,
+            "user": user_dict,
+            "message": f"Welcome, {user_dict['username']}!"
+        }
     finally:
         conn.close()
 

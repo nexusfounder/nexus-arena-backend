@@ -13858,17 +13858,22 @@ function loginWithGoogle() {
         provider.setCustomParameters({ prompt: 'select_account' });
 
         firebase.auth().signInWithPopup(provider)
-            .then((result) => {
+            .then(async (result) => {
                 const u = result.user;
                 if (!u) {
                     showToast("No user credentials received from Google.", "error");
                     return;
                 }
-                handleGoogleAuthSuccess({
+                let idToken = null;
+                try {
+                    idToken = await u.getIdToken();
+                } catch (e) {}
+                await handleGoogleAuthSuccess({
                     displayName: u.displayName || (u.email ? u.email.split('@')[0] : "Google Gamer"),
                     email: u.email || "",
                     photoURL: u.photoURL || "",
                     uid: u.uid || ("g_" + Date.now()),
+                    idToken: idToken,
                     keepLoggedIn: true
                 });
             })
@@ -13879,7 +13884,9 @@ function loginWithGoogle() {
                     return;
                 }
                 if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/configuration-not-found') {
-                    showToast("⚠️ Google Sign-In needs activation in Firebase Console. Enable Google under Authentication > Sign-in method, or sign in using your Arena Email & Password.", "warning", 8000);
+                    showToast("⚠️ Google Sign-In needs activation in Firebase Console. In Console > Authentication > Sign-in method, enable Google.", "warning", 8000);
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    showToast("⚠️ Domain not authorized: In Firebase Console > Authentication > Settings > Authorized domains, add nexusgamingarena.online", "warning", 8000);
                 } else if (error.code === 'auth/popup-blocked') {
                     showToast("Popup blocked by browser. Please allow popups for this site or try again.", "error");
                 } else {
@@ -13892,7 +13899,7 @@ function loginWithGoogle() {
     }
 }
 
-function handleGoogleAuthSuccess(googleUser) {
+async function handleGoogleAuthSuccess(googleUser) {
     const email = (googleUser.email || "").trim();
     const displayName = (googleUser.displayName || (email ? email.split("@")[0] : "Google Gamer")).trim();
     const username = displayName.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 15) || ("Gamer" + Math.floor(1000 + Math.random() * 9000));
@@ -13947,7 +13954,35 @@ function handleGoogleAuthSuccess(googleUser) {
     state.nexusCoins = userSessionData.nexus_coins || 100;
     state.dailyStreak = userSessionData.daily_streak || 1;
     state.referralCode = userSessionData.referral_code;
-    state.token = "google_token_" + Date.now();
+    // Sync with backend SQLite database and retrieve genuine cryptographically signed JWT
+    try {
+        const res = await fetch("/api/auth/google", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                email: email,
+                display_name: displayName,
+                photo_url: avatarUrl,
+                uid: uid,
+                id_token: googleUser.idToken || null
+            })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data.token) {
+                state.token = data.token;
+            }
+            if (data.user) {
+                userSessionData = { ...userSessionData, ...data.user };
+            }
+        }
+    } catch (e) {
+        console.warn("[Google Auth] Backend sync notice:", e);
+    }
+
+    if (!state.token || !state.token.includes(".")) {
+        state.token = state.token || ("google_token_" + Date.now());
+    }
 
     saveUserAuthSession(userSessionData, state.token, keepLoggedIn, email);
 

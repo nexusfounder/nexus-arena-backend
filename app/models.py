@@ -289,5 +289,12 @@ class RBIPaymentVerifyRequest(BaseModel):
     bank_name: Optional[str] = None
     team_name: Optional[str] = None
 
+class GoogleAuthRequest(BaseModel):
+    email: str
+    display_name: Optional[str] = None
+    photo_url: Optional[str] = None
+    uid: str
+    id_token: Optional[str] = None
+
 
 
