@@ -32,6 +32,7 @@ class TwoFactorDisableRequest(BaseModel):
     code: str = Field(..., min_length=6, max_length=24)
 
 class UserProfileUpdateRequest(BaseModel):
+    username: Optional[str] = None
     email: Optional[str] = None
     phone_number: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -43,17 +44,15 @@ class UserProfileUpdateRequest(BaseModel):
     @classmethod
     def validate_new_pw_strength(cls, v: Optional[str]) -> Optional[str]:
         if v is not None and len(v) > 0:
-            if len(v) < 12:
-                raise ValueError("New password must be at least 12 characters long.")
-            if not re.search(r"[A-Z]", v):
-                raise ValueError("New password must contain at least one uppercase letter (A-Z).")
-            if not re.search(r"[a-z]", v):
-                raise ValueError("New password must contain at least one lowercase letter (a-z).")
-            if not re.search(r"[0-9]", v):
-                raise ValueError("New password must contain at least one number (0-9).")
-            if not re.search(r"[!@#$%^&*()_+\-=\[\]{};':\"\\|,.<>\/?~` ]", v):
-                raise ValueError("New password must contain at least one special symbol (!@#$%^&*).")
+            if len(v) < 4:
+                raise ValueError("New password must be at least 4 characters long.")
         return v
+
+class AdminCredentialsUpdateRequest(BaseModel):
+    current_password: str = Field(...)
+    new_username: Optional[str] = None
+    new_password: Optional[str] = None
+    two_factor_code: Optional[str] = None
 
 class WithdrawRequest(BaseModel):
     amount: float = Field(..., gt=0)

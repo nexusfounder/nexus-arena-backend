@@ -11210,6 +11210,74 @@ async function loadAdminSecurityTab() {
                         </div>
                     </div>
 
+                    <!-- Change Admin Username & Password Form -->
+                    <div class="p-6 rounded-2xl bg-cyber-dark/80 border border-cyber-border space-y-4 shadow-xl">
+                        <div class="border-b border-cyber-border/70 pb-3 flex items-center justify-between">
+                            <div>
+                                <h5 class="font-orbitron font-bold text-sm text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-user-shield text-amber-400"></i> Change Admin Username &amp; Password
+                                </h5>
+                                <p class="text-[11px] text-gray-400">Modify your master administrator login username and password.</p>
+                            </div>
+                            <span class="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                                MASTER CREDENTIALS
+                            </span>
+                        </div>
+
+                        <form onsubmit="handleUpdateAdminCredentials(event)" class="space-y-3">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Admin Username</label>
+                                    <input type="text" id="admin-change-username" value="${state.user ? state.user.username : 'admin'}" required class="w-full bg-cyber-card border border-cyber-border rounded-xl px-3 py-2 text-xs text-cyan-300 focus:outline-none focus:border-amber-400 font-mono font-bold">
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Current Password</label>
+                                    <div class="relative">
+                                        <input type="password" id="admin-change-current-pw" required placeholder="Current password" class="w-full bg-cyber-card border border-cyber-border rounded-xl pl-3 pr-8 py-2 text-xs text-gray-200 focus:outline-none focus:border-amber-400 font-mono">
+                                        <button type="button" onclick="togglePasswordVisibility('admin-change-current-pw', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                                            <i class="fa-solid fa-eye text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">New Password (optional)</label>
+                                    <div class="relative">
+                                        <input type="password" id="admin-change-new-pw" placeholder="Leave blank to keep same" class="w-full bg-cyber-card border border-cyber-border rounded-xl pl-3 pr-8 py-2 text-xs text-gray-200 focus:outline-none focus:border-amber-400 font-mono">
+                                        <button type="button" onclick="togglePasswordVisibility('admin-change-new-pw', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                                            <i class="fa-solid fa-eye text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Confirm New Password</label>
+                                    <div class="relative">
+                                        <input type="password" id="admin-change-confirm-pw" placeholder="Confirm new password" class="w-full bg-cyber-card border border-cyber-border rounded-xl pl-3 pr-8 py-2 text-xs text-gray-200 focus:outline-none focus:border-amber-400 font-mono">
+                                        <button type="button" onclick="togglePasswordVisibility('admin-change-confirm-pw', this)" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                                            <i class="fa-solid fa-eye text-xs"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            ${bindings.two_factor_enabled ? `
+                            <div class="space-y-1">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Confirm Google Authenticator 6-Digit Code</label>
+                                <input type="text" id="admin-change-2fa" maxlength="6" placeholder="Enter live code from app (e.g. 123456)" class="w-full bg-cyber-card border border-amber-500/40 rounded-xl px-3 py-2 text-center text-xs font-mono tracking-widest text-amber-300 focus:outline-none focus:border-amber-400 font-bold">
+                            </div>
+                            ` : ''}
+
+                            <div class="flex justify-end pt-1">
+                                <button type="submit" id="btn-save-admin-cred" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-600 hover:brightness-110 text-black font-rajdhani font-black text-xs uppercase tracking-wider shadow glow-gold flex items-center gap-1.5 cursor-pointer transition-all">
+                                    <i class="fa-solid fa-check"></i>
+                                    <span>Update Admin Credentials</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
                     <!-- Update Contact Bindings Form -->
                     <div class="p-6 rounded-2xl bg-cyber-dark/80 border border-cyber-border space-y-4 shadow-xl">
                         <div class="border-b border-cyber-border/70 pb-3">
@@ -14031,3 +14099,223 @@ if (document.readyState === 'loading') {
     startApp();
 }
 
+
+
+// ============================================================
+// ADMIN & USER CREDENTIAL CHANGE HANDLERS
+// ============================================================
+
+async function handleUpdateAdminCredentials(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (typeof playCyberSound === 'function') playCyberSound('click');
+
+    const username = (document.getElementById('admin-change-username')?.value || '').trim();
+    const currentPw = (document.getElementById('admin-change-current-pw')?.value || '').trim();
+    const newPw = (document.getElementById('admin-change-new-pw')?.value || '').trim();
+    const confirmPw = (document.getElementById('admin-change-confirm-pw')?.value || '').trim();
+    const code2fa = (document.getElementById('admin-change-2fa')?.value || '').trim();
+    const btn = document.getElementById('btn-save-admin-cred');
+
+    if (!username) {
+        showToast("Username cannot be empty.", "error");
+        return;
+    }
+    if (!currentPw) {
+        showToast("Please enter your current password to authorize changes.", "error");
+        return;
+    }
+    if (newPw) {
+        if (newPw.length < 6) {
+            showToast("New password must be at least 6 characters.", "error");
+            return;
+        }
+        if (newPw !== confirmPw) {
+            showToast("New passwords do not match.", "error");
+            return;
+        }
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Updating...`;
+    }
+
+    try {
+        const payload = {
+            current_password: currentPw,
+            new_username: username,
+            new_password: newPw || null,
+            two_factor_code: code2fa || null
+        };
+
+        const res = await fetch("/api/admin/credentials/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            if (typeof playCyberSound === 'function') playCyberSound('error');
+            showToast("❌ " + (data.detail || "Failed to update credentials."), "error");
+            return;
+        }
+
+        if (typeof playCyberSound === 'function') playCyberSound('success');
+        showToast("✓ " + (data.message || "Admin credentials updated successfully!"), "success");
+
+        // Update active session state
+        if (data.token) {
+            state.token = data.token;
+            try { localStorage.setItem("nexus_token", data.token); } catch (e) {}
+        }
+        if (data.user) {
+            state.user = { ...state.user, ...data.user };
+            try { localStorage.setItem("nexus_user", JSON.stringify(state.user)); } catch (e) {}
+        }
+
+        // Also update local registered gamers if present
+        try {
+            const regUsers = JSON.parse(localStorage.getItem("nexus_registered_gamers") || "[]");
+            const idx = regUsers.findIndex(u => u.role === 'ADMIN' || u.id === state.user.id);
+            if (idx !== -1) {
+                regUsers[idx].username = username;
+                if (newPw) regUsers[idx].password = newPw;
+                localStorage.setItem("nexus_registered_gamers", JSON.stringify(regUsers));
+            }
+        } catch(e) {}
+
+        if (typeof updateHeaderProfile === 'function') updateHeaderProfile();
+
+        // Clear password fields
+        const curEl = document.getElementById('admin-change-current-pw');
+        const newEl = document.getElementById('admin-change-new-pw');
+        const confEl = document.getElementById('admin-change-confirm-pw');
+        const c2faEl = document.getElementById('admin-change-2fa');
+        if (curEl) curEl.value = '';
+        if (newEl) newEl.value = '';
+        if (confEl) confEl.value = '';
+        if (c2faEl) c2faEl.value = '';
+
+    } catch (err) {
+        showToast("Network error updating credentials.", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-check"></i> <span>Update Admin Credentials</span>`;
+        }
+    }
+}
+window.handleUpdateAdminCredentials = handleUpdateAdminCredentials;
+
+function openChangeCredentialsModal() {
+    playCyberSound('click');
+    const unameInput = document.getElementById('user-change-username');
+    if (unameInput && state.user) {
+        unameInput.value = state.user.username || '';
+    }
+    const box2fa = document.getElementById('user-change-2fa-box');
+    if (box2fa) {
+        if (state.user && state.user.two_factor_enabled) {
+            box2fa.classList.remove('hidden');
+        } else {
+            box2fa.classList.add('hidden');
+        }
+    }
+    openModal('modal-change-credentials');
+}
+window.openChangeCredentialsModal = openChangeCredentialsModal;
+
+async function handleUserChangeCredentials(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (typeof playCyberSound === 'function') playCyberSound('click');
+
+    const username = (document.getElementById('user-change-username')?.value || '').trim();
+    const currentPw = (document.getElementById('user-change-current-pw')?.value || '').trim();
+    const newPw = (document.getElementById('user-change-new-pw')?.value || '').trim();
+    const confirmPw = (document.getElementById('user-change-confirm-pw')?.value || '').trim();
+    const code2fa = (document.getElementById('user-change-2fa')?.value || '').trim();
+    const btn = document.getElementById('btn-user-save-cred');
+
+    if (!username) {
+        showToast("Username cannot be empty.", "error");
+        return;
+    }
+    if (!currentPw) {
+        showToast("Please enter your current password.", "error");
+        return;
+    }
+    if (newPw) {
+        if (newPw.length < 6) {
+            showToast("New password must be at least 6 characters.", "error");
+            return;
+        }
+        if (newPw !== confirmPw) {
+            showToast("New passwords do not match.", "error");
+            return;
+        }
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Saving...`;
+    }
+
+    try {
+        const isAdmin = state.user && (state.user.role === 'ADMIN' || state.user.role === 'SUPERADMIN');
+        const endpoint = isAdmin ? "/api/admin/credentials/update" : "/api/users/profile/update";
+        const payload = isAdmin ? {
+            current_password: currentPw,
+            new_username: username,
+            new_password: newPw || null,
+            two_factor_code: code2fa || null
+        } : {
+            current_password: currentPw,
+            username: username,
+            new_password: newPw || null,
+            two_factor_code: code2fa || null
+        };
+
+        const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            if (typeof playCyberSound === 'function') playCyberSound('error');
+            showToast("❌ " + (data.detail || "Update failed."), "error");
+            return;
+        }
+
+        if (typeof playCyberSound === 'function') playCyberSound('success');
+        showToast("✓ " + (data.message || "Credentials updated successfully!"), "success");
+
+        if (data.token) {
+            state.token = data.token;
+            try { localStorage.setItem("nexus_token", data.token); } catch (e) {}
+        }
+        if (data.user) {
+            state.user = { ...state.user, ...data.user };
+            try { localStorage.setItem("nexus_user", JSON.stringify(state.user)); } catch (e) {}
+        } else {
+            state.user.username = username;
+            try { localStorage.setItem("nexus_user", JSON.stringify(state.user)); } catch (e) {}
+        }
+
+        if (typeof updateHeaderProfile === 'function') updateHeaderProfile();
+        closeModal('modal-change-credentials');
+
+    } catch (err) {
+        showToast("Network error updating credentials.", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> <span>Save Changes</span>`;
+        }
+    }
+}
+window.handleUserChangeCredentials = handleUserChangeCredentials;
