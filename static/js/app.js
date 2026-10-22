@@ -1,16 +1,19 @@
 // Production Backend API Router
-// Automatically routes /api/* requests to the live Render cloud backend when on Firebase or custom domain
+// Automatically routes /api/* requests to the live Render cloud backend when on Firebase Hosting
 const _originalFetch = window.fetch;
 const PROD_API_BACKEND = 'https://nexus-arena-backend.onrender.com';
-const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const IS_DIRECT_BACKEND = window.location.hostname === 'localhost' || 
+    window.location.hostname === '127.0.0.1' || 
+    window.location.hostname.includes('onrender.com') || 
+    window.location.hostname.includes('nexusgamingarena.online');
 
 window.fetch = function(input, init) {
     if (typeof input === 'string' && input.startsWith('/api/')) {
-        if (!IS_LOCAL) {
+        if (!IS_DIRECT_BACKEND) {
             input = PROD_API_BACKEND + input;
         }
     } else if (input instanceof Request && input.url && input.url.startsWith('/api/')) {
-        if (!IS_LOCAL) {
+        if (!IS_DIRECT_BACKEND) {
             input = new Request(PROD_API_BACKEND + input.url, input);
         }
     }
