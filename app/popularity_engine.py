@@ -173,17 +173,17 @@ def get_player_trends_summary() -> Dict[str, Any]:
         completed_matches = cursor.fetchone()["total_matches"]
 
         cursor.execute("SELECT SUM(views_count) as total_clip_views FROM videos")
-        total_clip_views = cursor.fetchone()["total_clip_views"] or 18450
+        total_clip_views = cursor.fetchone()["total_clip_views"] or 0
 
         return {
             "top_trending_tournaments": trending_tournaments[:6],
             "top_trending_games": games_popularity[:5],
             "community_pulse": {
-                "active_gamers": total_users + 14200,  # Combined community active base
+                "active_gamers": total_users,
                 "total_prize_pool_dollars": total_active_prize_cents / 100.0,
-                "matches_played": completed_matches + 842,
+                "matches_played": completed_matches,
                 "clip_views": total_clip_views,
-                "trending_now_label": trending_tournaments[0]["title"] if trending_tournaments else "Esports Championship"
+                "trending_now_label": trending_tournaments[0]["title"] if trending_tournaments else "Season 1 Arena Open - Registration Starting Soon"
             }
         }
     finally:

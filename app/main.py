@@ -2713,7 +2713,7 @@ def get_admin_delegations(admin_user: dict = Depends(require_admin_or_coadmin)):
         cursor.execute("""
         SELECT id, username, role, elo_rating 
         FROM users 
-        WHERE role IN ('ADMIN', 'CO_ADMIN') OR username IN ('NexusCoAdmin', 'admin', 'CyberPhoenix', 'ShadowStriker')
+        WHERE role IN ('ADMIN', 'CO_ADMIN', 'SUPERADMIN')
         ORDER BY role DESC, username ASC
         """)
         managers = [dict(u) for u in cursor.fetchall()]
@@ -3156,9 +3156,9 @@ def update_user_role_route(
             raise HTTPException(status_code=404, detail="User account not found.")
 
         target_dict = dict(target_user)
-        # Protect Master Admin Wolfy from demotion
-        if target_dict["username"].lower() == "wolfy" and target_role != "ADMIN":
-            raise HTTPException(status_code=400, detail="Master Admin 'Wolfy' cannot be demoted.")
+        # Protect Master Admin from demotion
+        if target_dict["username"].lower() in ("admin", "wolfy") and target_role != "ADMIN":
+            raise HTTPException(status_code=400, detail="Master Admin cannot be demoted.")
 
         # Verify role exists (either built-in or custom)
         is_builtin = target_role in [r["role_key"] for r in BUILTIN_ROLES]

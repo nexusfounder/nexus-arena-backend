@@ -58,178 +58,14 @@ window.hashPassword = hashPassword;
 // CLIENT-SIDE ENTERPRISE DEMO DATASET
 // Ensures 100% full content on Google Firebase CDN
 // ==========================================
-const DEMO_TOURNAMENTS = [
-    {
-        id: "t_valorant_pro",
-        title: "Valorant Pro Champions Cup",
-        game_id: "valorant",
-        game_title: "Valorant",
-        game_mode: "5v5 Competitive Defuse",
-        map_name: "Bind / Ascent / Haven",
-        server_region: "Mumbai AWS",
-        entry_fee: 500,
-        prize_pool: 150000,
-        coin_entry_fee: 500,
-        max_participants: 8,
-        participants_count: 8,
-        status: "IN_PROGRESS",
-        urgency_tag: "🔥 FINALS STAGE",
-        format: "SINGLE_ELIMINATION",
-        hype: { hype_score: 95, badge_text: "⚡ HIGH DEMAND", badge_color: "#00f2fe", trend_status: "Peak Hype" },
-        banner_url: "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&auto=format&fit=crop&q=80",
-        rules: "5v5 Competitive ruleset. Standard active map pool. Anti-cheat required."
-    },
-    {
-        id: "t_bgmi_masters",
-        title: "BGMI National Championship Masters",
-        game_id: "bgmi",
-        game_title: "BGMI Mobile",
-        game_mode: "Squad (TPP)",
-        map_name: "Erangel & Miramar",
-        server_region: "Mumbai Cluster",
-        entry_fee: 0,
-        prize_pool: 250000,
-        coin_entry_fee: 0,
-        max_participants: 16,
-        participants_count: 14,
-        status: "REGISTRATION",
-        urgency_tag: "🔥 FILLING FAST",
-        format: "BATTLE_ROYALE",
-        hype: { hype_score: 98, badge_text: "🔥 VIRAL RUSH", badge_color: "#ff007f", trend_status: "Trending #1" },
-        banner_url: "https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&auto=format&fit=crop&q=80",
-        rules: "Erangel & Miramar. Mobile devices only. Emulators strictly banned."
-    },
-    {
-        id: "t_cs2_showdown",
-        title: "CS2 Elite Showdown Arena",
-        game_id: "cs2",
-        game_title: "Counter-Strike 2",
-        game_mode: "5v5 MR12 Bomb",
-        map_name: "Mirage / Inferno / Dust II",
-        server_region: "Singapore Edge",
-        entry_fee: 300,
-        prize_pool: 75000,
-        coin_entry_fee: 300,
-        max_participants: 8,
-        participants_count: 6,
-        status: "REGISTRATION",
-        urgency_tag: "⚡ DAILY CUP",
-        format: "SINGLE_ELIMINATION",
-        hype: { hype_score: 88, badge_text: "📈 RISING STAR", badge_color: "#00ffcc", trend_status: "Hot Event" },
-        banner_url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&auto=format&fit=crop&q=80",
-        rules: "MR12 format, active duty map pool. Captains veto in lobby."
-    },
-    {
-        id: "t_freefire_clash",
-        title: "Free Fire Max Squad Royale",
-        game_id: "freefire",
-        game_title: "Free Fire Max",
-        game_mode: "Clash Squad 4v4",
-        map_name: "Bermuda Remastered",
-        server_region: "India Central",
-        entry_fee: 100,
-        prize_pool: 50000,
-        coin_entry_fee: 100,
-        max_participants: 12,
-        participants_count: 10,
-        status: "REGISTRATION",
-        urgency_tag: "🔥 WEEKEND CUP",
-        format: "BATTLE_ROYALE",
-        hype: { hype_score: 91, badge_text: "⚡ HIGH DEMAND", badge_color: "#f5a623", trend_status: "Viral" },
-        banner_url: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?w=800&auto=format&fit=crop&q=80",
-        rules: "Bermuda & Purgatory maps. Mobile squads only."
-    },
-    {
-        id: "t_apex_legends",
-        title: "Apex Legends Predator Trios",
-        game_id: "apex",
-        game_title: "Apex Legends",
-        game_mode: "Trios (3-Man Squads)",
-        map_name: "World's Edge",
-        server_region: "Tokyo / Mumbai",
-        entry_fee: 250,
-        prize_pool: 100000,
-        coin_entry_fee: 250,
-        max_participants: 10,
-        participants_count: 8,
-        status: "REGISTRATION",
-        urgency_tag: "⚡ PRO CIRCUIT",
-        format: "TRIOS",
-        hype: { hype_score: 86, badge_text: "📈 RISING TREND", badge_color: "#7928ca", trend_status: "Active" },
-        banner_url: "https://images.unsplash.com/photo-1542751110-97427bbecf20?w=800&auto=format&fit=crop&q=80",
-        rules: "Standard ranked ALGS point distribution."
-    },
-    {
-        id: "t_codm_warfare",
-        title: "Call of Duty Mobile Clan Wars",
-        game_id: "codm",
-        game_title: "COD Mobile",
-        game_mode: "5v5 Search & Destroy",
-        map_name: "Crash / Standoff",
-        server_region: "Mumbai Cluster",
-        entry_fee: 150,
-        prize_pool: 60000,
-        coin_entry_fee: 150,
-        max_participants: 16,
-        participants_count: 14,
-        status: "REGISTRATION",
-        urgency_tag: "🔥 FILLING FAST",
-        format: "SEARCH_AND_DESTROY",
-        hype: { hype_score: 89, badge_text: "⚡ HIGH DEMAND", badge_color: "#00f2fe", trend_status: "Hot Event" },
-        banner_url: "https://images.unsplash.com/photo-1579373903781-fd5c0c30c4cd?w=800&auto=format&fit=crop&q=80",
-        rules: "Hardpoint & SnD maps. Competitive operator loadouts enforced."
-    }
-];
+const DEMO_TOURNAMENTS = [];
 
 const DEMO_POPULARITY_TRENDS = {
-    top_trending_tournaments: [
-        {
-            id: "t_bgmi_masters",
-            title: "BGMI National Championship Masters",
-            game_name: "BGMI Mobile",
-            prize_pool_dollars: 250000,
-            hype: { hype_score: 98, trend_status: "Viral Rush", badge_color: "#ff007f" }
-        },
-        {
-            id: "t_valorant_pro",
-            title: "Valorant Pro Champions Cup",
-            game_name: "Valorant",
-            prize_pool_dollars: 150000,
-            hype: { hype_score: 95, trend_status: "High Demand", badge_color: "#00f2fe" }
-        },
-        {
-            id: "t_cs2_showdown",
-            title: "CS2 Elite Showdown Arena",
-            game_name: "Counter-Strike 2",
-            prize_pool_dollars: 75000,
-            hype: { hype_score: 88, trend_status: "Rising Star", badge_color: "#00ffcc" }
-        }
-    ],
+    top_trending_tournaments: [],
     top_trending_games: [
-        {
-            name: "BGMI Mobile",
-            icon: "📱",
-            meta_tag: "BATTLE ROYALE",
-            momentum_pct: "+28% Traffic",
-            popularity_score: 98,
-            tournament_count: 14
-        },
-        {
-            name: "Valorant",
-            icon: "🎯",
-            meta_tag: "TACTICAL FPS",
-            momentum_pct: "+22% Traffic",
-            popularity_score: 95,
-            tournament_count: 9
-        },
-        {
-            name: "Counter-Strike 2",
-            icon: "💣",
-            meta_tag: "PRECISION SHOOTER",
-            momentum_pct: "+15% Traffic",
-            popularity_score: 89,
-            tournament_count: 6
-        }
+        { name: "Valorant", icon: "🎯", meta_tag: "TACTICAL FPS", momentum_pct: "+15% Traffic", popularity_score: 95, tournament_count: 0 },
+        { name: "Battlegrounds Mobile India (BGMI)", icon: "📱", meta_tag: "BATTLE ROYALE", momentum_pct: "+20% Traffic", popularity_score: 98, tournament_count: 0 },
+        { name: "Counter-Strike 2", icon: "💣", meta_tag: "PRECISION SHOOTER", momentum_pct: "+10% Traffic", popularity_score: 89, tournament_count: 0 }
     ],
     community_pulse: {
         active_gamers: 1,
@@ -242,18 +78,14 @@ const DEMO_LEADERBOARD = [];
 
 const DEMO_VIDEOS = [];
 
-const DEMO_QUESTS = [
-    { id: "q1", title: "Daily Scrim Check-in", description: "Log in and check in to any active arena tournament lobby.", coin_reward: 50, current_count: 1, target_count: 1, is_completed: true, is_claimed: false, icon: "fa-calendar-check" },
-    { id: "q2", title: "Clan Recruiter", description: "Share your squad referral code and recruit clan members.", coin_reward: 150, current_count: 3, target_count: 5, is_completed: false, is_claimed: false, icon: "fa-users" },
-    { id: "q3", title: "First Blood Victor", description: "Participate in any daily competitive bracket.", coin_reward: 200, current_count: 1, target_count: 1, is_completed: true, is_claimed: false, icon: "fa-trophy" }
-];
+const DEMO_QUESTS = [];
 
 
 const DEMO_SECTIONS = [
-    { section_key: "tournaments", section_number: 1, section_name: "Tournaments & Brackets", description: "Live esports tournaments and automated brackets", assigned_username: "Wolfy", assigned_manager_title: "Tournament Director", status: "ACTIVE", responsibilities: "Bracket seeding, match verification, and dispute resolution." },
-    { section_key: "trends", section_number: 2, section_name: "Trends & Meta", description: "Community popularity algorithms and viral esports tracker", assigned_username: "ShadowStriker", assigned_manager_title: "Head of Game Analytics", status: "ACTIVE", responsibilities: "Monitoring game momentum, viral clips, and community pulse." },
-    { section_key: "leaderboard", section_number: 3, section_name: "Leaderboard & Hall of Fame", description: "Global ELO MMR rankings and podium champions", assigned_username: "ViperQueen", assigned_manager_title: "Chief Referee & Ratings", status: "ACTIVE", responsibilities: "Anti-cheat MMR integrity, ban enforcement, and podium validation." },
-    { section_key: "clans", section_number: 4, section_name: "Clans & Community", description: "Squad recruitment, clan battles, and discord integrations", assigned_username: "NexusTitan", assigned_manager_title: "Community Director", status: "ACTIVE", responsibilities: "Clan verification, recruitment hub moderation, and event partnerships." }
+    { section_key: "tournaments", section_number: 1, section_name: "Tournaments & Brackets", description: "Live esports tournaments and automated brackets", assigned_username: "Administrator", assigned_manager_title: "Tournament Director", status: "ACTIVE", responsibilities: "Bracket seeding, match verification, and dispute resolution." },
+    { section_key: "trends", section_number: 2, section_name: "Trends & Meta", description: "Community popularity algorithms and viral esports tracker", assigned_username: "Administrator", assigned_manager_title: "Head of Game Analytics", status: "ACTIVE", responsibilities: "Monitoring game momentum, viral clips, and community pulse." },
+    { section_key: "leaderboard", section_number: 3, section_name: "Leaderboard & Hall of Fame", description: "Global ELO MMR rankings and podium champions", assigned_username: "Administrator", assigned_manager_title: "Chief Referee & Ratings", status: "ACTIVE", responsibilities: "Anti-cheat MMR integrity, ban enforcement, and podium validation." },
+    { section_key: "clans", section_number: 4, section_name: "Clans & Community", description: "Squad recruitment, clan battles, and discord integrations", assigned_username: "Administrator", assigned_manager_title: "Community Director", status: "ACTIVE", responsibilities: "Clan verification, recruitment hub moderation, and event partnerships." }
 ];
 
 
@@ -336,13 +168,13 @@ let state = {
     referralCode: "",
     paymentConfig: getPaymentConfig(),
     selectedRegUpiApp: "phonepe",
-    quests: (typeof DEMO_QUESTS !== 'undefined') ? DEMO_QUESTS : [],
+    quests: [],
     selectedTopup: 500,
-    tournaments: (typeof DEMO_TOURNAMENTS !== 'undefined') ? DEMO_TOURNAMENTS : [],
-    leaderboard: (typeof DEMO_LEADERBOARD !== 'undefined') ? DEMO_LEADERBOARD : [],
-    videos: (typeof DEMO_VIDEOS !== 'undefined') ? DEMO_VIDEOS : [],
+    tournaments: [],
+    leaderboard: [],
+    videos: [],
     transactions: [],
-    activeTournament: (typeof DEMO_TOURNAMENTS !== 'undefined' && DEMO_TOURNAMENTS.length > 0) ? DEMO_TOURNAMENTS[0] : null,
+    activeTournament: null,
     activeVideo: null,
     socket: null,
     audioEnabled: true
@@ -565,22 +397,31 @@ function initCanvasParticles() {
 // ==========================================
 
 function initHeroCountdown() {
-    let secondsLeft = 2 * 86400 + 14 * 3600 + 36 * 60 + 22; // 2d 14h 36m 22s
+    const el = document.getElementById("hero-countdown");
+    if (!el) return;
 
-    setInterval(() => {
-        if (secondsLeft > 0) secondsLeft--;
-
-        const days = Math.floor(secondsLeft / 86400);
-        const hours = Math.floor((secondsLeft % 86400) / 3600);
-        const mins = Math.floor((secondsLeft % 3600) / 60);
-        const secs = secondsLeft % 60;
-
+    function tick() {
+        const t = (state.tournaments || []).find(x => x.start_time && new Date(x.start_time) > new Date());
+        if (!t) {
+            el.innerText = "SEASON 1 LIVE";
+            return;
+        }
+        const diffMs = new Date(t.start_time) - new Date();
+        if (diffMs <= 0) {
+            el.innerText = "LIVE NOW";
+            return;
+        }
+        const totalSecs = Math.floor(diffMs / 1000);
+        const days = Math.floor(totalSecs / 86400);
+        const hours = Math.floor((totalSecs % 86400) / 3600);
+        const mins = Math.floor((totalSecs % 3600) / 60);
+        const secs = totalSecs % 60;
         const pad = (n) => String(n).padStart(2, '0');
-        const str = `${pad(days)}d : ${pad(hours)}h : ${pad(mins)}m : ${pad(secs)}s`;
+        el.innerText = `${pad(days)}d : ${pad(hours)}h : ${pad(mins)}m : ${pad(secs)}s`;
+    }
 
-        const el = document.getElementById("hero-countdown");
-        if (el) el.innerText = str;
-    }, 1000);
+    tick();
+    setInterval(tick, 1000);
 }
 
 // ==========================================
@@ -1973,7 +1814,7 @@ function switchTab(tabId, pushHistory = true) {
     if (tabId === 'admin') {
         if (!isAdminUser()) {
             playCyberSound('error');
-            showToast("⛔ Access Denied: Admin (Wolfy) and Co-Admin privileges required. Normal gamers have access to tournament arenas only.", "error");
+            showToast("⛔ Access Denied: Administrator privileges required.", "error");
             switchTab('tournaments', false);
             return;
         }
@@ -2144,29 +1985,30 @@ async function loadTournaments(filter = 'all', query = '') {
         const cached = localStorage.getItem("nexus_tournaments");
         if (cached) {
             const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed) && parsed.length > 0) {
+            if (Array.isArray(parsed) && parsed.length > 0 && !JSON.stringify(parsed).includes("t_valorant_pro")) {
                 state.tournaments = parsed;
+            } else {
+                localStorage.removeItem("nexus_tournaments");
+                state.tournaments = [];
             }
         }
     } catch (e) {}
 
-    if (!state.tournaments || state.tournaments.length === 0) {
-        try {
-            const res = await fetch("/api/tournaments");
-            const contentType = res.headers.get("content-type");
-            if (res.ok && contentType && contentType.includes("application/json")) {
-                const data = await res.json();
-                state.tournaments = (data && data.length > 0) ? data : DEMO_TOURNAMENTS;
-            } else {
-                state.tournaments = DEMO_TOURNAMENTS;
-            }
-        } catch (e) {
-            state.tournaments = DEMO_TOURNAMENTS;
+    try {
+        const res = await fetch("/api/tournaments");
+        const contentType = res.headers.get("content-type");
+        if (res.ok && contentType && contentType.includes("application/json")) {
+            const data = await res.json();
+            state.tournaments = Array.isArray(data) ? data : [];
+        } else {
+            state.tournaments = [];
         }
-        try {
-            localStorage.setItem("nexus_tournaments", JSON.stringify(state.tournaments));
-        } catch (e) {}
+    } catch (e) {
+        state.tournaments = state.tournaments || [];
     }
+    try {
+        localStorage.setItem("nexus_tournaments", JSON.stringify(state.tournaments));
+    } catch (e) {}
     renderTournaments(filter, query);
 }
 
@@ -2175,8 +2017,8 @@ function renderTournaments(filter = 'all', searchQuery = '') {
     if (!grid) return;
     grid.innerHTML = '';
 
-    if (!state.tournaments || state.tournaments.length === 0) {
-        state.tournaments = DEMO_TOURNAMENTS;
+    if (!state.tournaments) {
+        state.tournaments = [];
     }
 
     const filtered = state.tournaments.filter(t => {
@@ -2189,7 +2031,28 @@ function renderTournaments(filter = 'all', searchQuery = '') {
     });
 
     if (filtered.length === 0) {
-        grid.innerHTML = `<div class="col-span-full py-16 text-center text-gray-400 font-bold">No tournaments found in this arena.</div>`;
+        const isAdmin = typeof isAdminUser === 'function' && isAdminUser();
+        grid.innerHTML = `
+            <div class="col-span-full py-16 px-6 text-center space-y-4 bg-cyber-card/60 border border-cyber-border rounded-3xl backdrop-blur-md glow-cyan max-w-2xl mx-auto my-6">
+                <div class="w-20 h-20 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 mx-auto flex items-center justify-center text-cyan-400 text-3xl glow-cyan">
+                    <i class="fa-solid fa-trophy"></i>
+                </div>
+                <div class="space-y-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-black uppercase tracking-widest bg-cyan-500/20 text-cyan-400 border border-cyan-500/40">
+                        SEASON 1 &bull; ARENA PREPARATION
+                    </span>
+                    <h3 class="font-orbitron font-extrabold text-2xl text-white">No Active Tournaments Scheduled</h3>
+                    <p class="text-sm text-gray-300 max-w-md mx-auto leading-relaxed">
+                        The platform is live and preparing for inaugural Season 1 events. Check back shortly for announced tournaments or join our community scrim channels!
+                    </p>
+                </div>
+                <div class="pt-2 flex justify-center gap-3">
+                    <button onclick="${isAdmin ? 'openCreateTournamentModal()' : 'switchTab(\'quests\')'}" class="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-black font-black text-xs hover:brightness-110 transition-all glow-cyan btn-sweep">
+                        <i class="fa-solid ${isAdmin ? 'fa-plus' : 'fa-gamepad'} mr-1.5"></i> ${isAdmin ? 'Create First Tournament' : 'Join Community Quests'}
+                    </button>
+                </div>
+            </div>
+        `;
         return;
     }
 
@@ -2304,16 +2167,12 @@ function searchTournaments() {
 
 function openRegisterModal(tId) {
     if (typeof playCyberSound === 'function') playCyberSound('click');
-    const pool = (state && state.tournaments && state.tournaments.length > 0) ? state.tournaments : DEMO_TOURNAMENTS;
-    const t = pool.find(x => x.id === tId) || DEMO_TOURNAMENTS.find(x => x.id === tId) || pool[0] || DEMO_TOURNAMENTS[0] || {
-        id: tId || "t_valorant_pro",
-        title: "Valorant Pro Champions Cup",
-        game_title: "Valorant",
-        game_mode: "5v5 Competitive Defuse",
-        entry_fee: 500,
-        prize_pool: 150000,
-        coin_entry_fee: 500
-    };
+    const pool = (state && state.tournaments && state.tournaments.length > 0) ? state.tournaments : [];
+    const t = pool.find(x => x.id === tId) || (pool.length > 0 ? pool[0] : null);
+    if (!t) {
+        showToast("Tournament details not found.", "info");
+        return;
+    }
     state.activeTournament = t;
 
     try {
@@ -2769,14 +2628,14 @@ async function loadQuests() {
         const res = await fetch("/api/quests", { headers });
         if (res.ok) {
             const data = await res.json();
-            state.quests = (data.quests && data.quests.length > 0) ? data.quests : DEMO_QUESTS;
+            state.quests = (data.quests && data.quests.length > 0) ? data.quests : [];
             state.nexusCoins = data.nexus_coins || state.nexusCoins;
             state.dailyStreak = data.daily_streak || state.dailyStreak;
         } else {
-            state.quests = DEMO_QUESTS;
+            state.quests = [];
         }
     } catch (e) {
-        state.quests = DEMO_QUESTS;
+        state.quests = [];
     }
     renderQuests();
     updateHeaderProfile();
@@ -2885,7 +2744,7 @@ async function claimQuest(questId) {
 
 function copyReferralCode() {
     playCyberSound('click');
-    const code = state.referralCode || "WOLFY_PRO";
+    const code = state.referralCode || (state.user ? `${state.user.username.toUpperCase()}_VIP` : "NEXUS_VIP");
     navigator.clipboard.writeText(code);
     showToast(`Squad Code "${code}" copied to clipboard! Share with your clan.`, 'success');
 }
@@ -2967,32 +2826,15 @@ async function viewTournamentBracket(tId) {
             }
         } catch (err) {}
 
-    if (!t) {
-        const found = (state.tournaments || []).find(x => x.id === tId) || DEMO_TOURNAMENTS.find(x => x.id === tId) || DEMO_TOURNAMENTS[0];
-        t = {
-            ...found,
-            participants: [
-                { user_id: "u1", username: "Wolfy", team_name: "Wolfy Squad" },
-                { user_id: "u2", username: "ShadowStriker", team_name: "Shadow Elite" },
-                { user_id: "u3", username: "ViperQueen", team_name: "Viper Clan" },
-                { user_id: "u4", username: "ApexPredator", team_name: "Predators" },
-                { user_id: "u5", username: "NexusTitan", team_name: "Titan Force" },
-                { user_id: "u6", username: "PixelSniper", team_name: "Pixel Squad" },
-                { user_id: "u7", username: "GhostRider", team_name: "Ghost Legion" },
-                { user_id: "u8", username: "CyberSamurai", team_name: "Cyber Ronin" }
-            ],
-            matches: [
-                { id: "m_qf1", round_index: 1, round_name: "Quarter Finals", player_a_name: "Wolfy Squad", player_b_name: "Shadow Elite", score_a: 2, score_b: 1, player_a_id: "u1", player_b_id: "u2", winner_id: "u1", status: "COMPLETED" },
-                { id: "m_qf2", round_index: 1, round_name: "Quarter Finals", player_a_name: "Viper Clan", player_b_name: "Predators", score_a: 2, score_b: 0, player_a_id: "u3", player_b_id: "u4", winner_id: "u3", status: "COMPLETED" },
-                { id: "m_qf3", round_index: 1, round_name: "Quarter Finals", player_a_name: "Titan Force", player_b_name: "Pixel Squad", score_a: 1, score_b: 2, player_a_id: "u5", player_b_id: "u6", winner_id: "u6", status: "COMPLETED" },
-                { id: "m_qf4", round_index: 1, round_name: "Quarter Finals", player_a_name: "Ghost Legion", player_b_name: "Cyber Ronin", score_a: 2, score_b: 0, player_a_id: "u7", player_b_id: "u8", winner_id: "u7", status: "COMPLETED" },
-                { id: "m_sf1", round_index: 2, round_name: "Semi Finals", player_a_name: "Wolfy Squad", player_b_name: "Viper Clan", score_a: 2, score_b: 1, player_a_id: "u1", player_b_id: "u3", winner_id: "u1", status: "COMPLETED" },
-                { id: "m_sf2", round_index: 2, round_name: "Semi Finals", player_a_name: "Pixel Squad", player_b_name: "Ghost Legion", score_a: 2, score_b: 0, player_a_id: "u6", player_b_id: "u7", winner_id: "u6", status: "COMPLETED" },
-                { id: "m_gf", round_index: 3, round_name: "Grand Finals", player_a_name: "Wolfy Squad", player_b_name: "Pixel Squad", score_a: 3, score_b: 2, player_a_id: "u1", player_b_id: "u6", winner_id: "u1", status: "COMPLETED" }
-            ]
-        };
-    }
-    state.activeTournament = t;
+        if (!t) {
+            t = (state.tournaments || []).find(x => x.id === tId);
+        }
+
+        if (!t) {
+            showToast("Tournament bracket not available.", "info");
+            return;
+        }
+        state.activeTournament = t;
 
     document.getElementById("bracket-modal-title").innerText = t.title;
     document.getElementById("bracket-modal-meta").innerText = `Game: ${t.game_title} • Guaranteed Prize: ₹${Math.round(t.prize_pool).toLocaleString('en-IN')}`;
@@ -3117,7 +2959,7 @@ function openCreateTournamentModal() {
     playCyberSound('click');
     if (!isAdminUser()) {
         playCyberSound('error');
-        showToast("⛔ Access Denied: Admin (Wolfy) and Co-Admin privileges required to organize tournaments.", "error");
+        showToast("⛔ Access Denied: Administrator privileges required to organize tournaments.", "error");
         return;
     }
     openModal('modal-create-tournament');
@@ -3172,87 +3014,110 @@ async function loadLeaderboard() {
         const contentType = res.headers.get("content-type");
         if (res.ok && contentType && contentType.includes("application/json")) {
             const data = await res.json();
-            state.leaderboard = (data && data.length > 0) ? data : DEMO_LEADERBOARD;
+            state.leaderboard = Array.isArray(data) ? data : [];
         } else {
-            state.leaderboard = DEMO_LEADERBOARD;
+            state.leaderboard = [];
         }
     } catch (e) {
-        state.leaderboard = DEMO_LEADERBOARD;
+        state.leaderboard = [];
     }
     renderLeaderboard();
 }
 
 function renderLeaderboard() {
-    const filter = document.getElementById('leaderboard-game-filter').value;
-    const filtered = state.leaderboard.filter(p => {
+    const filterEl = document.getElementById('leaderboard-game-filter');
+    const filter = filterEl ? filterEl.value : 'all';
+    const filtered = (state.leaderboard || []).filter(p => {
+        if (!p) return false;
         if (filter === 'all') return true;
         return (p.game || p.fav_game || '').toLowerCase().includes(filter.toLowerCase());
     });
 
     const podiumContainer = document.getElementById('podium-container');
+    const tbody = document.getElementById('leaderboard-tbody');
+    if (!podiumContainer || !tbody) return;
+
     podiumContainer.innerHTML = '';
-    
-    if (state.leaderboard.length === 0) {
+    tbody.innerHTML = '';
+
+    if (filtered.length === 0) {
         podiumContainer.innerHTML = `
-            <div class="col-span-full py-12 text-center bg-cyber-card/60 rounded-3xl border border-cyber-border p-8">
+            <div class="col-span-full py-12 px-6 text-center bg-cyber-card/60 rounded-3xl border border-cyber-border p-8 glow-cyan">
                 <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-cyber-dark border border-cyan-500/30 flex items-center justify-center text-3xl">🏆</div>
-                <h3 class="font-orbitron font-bold text-white text-lg">Inaugural Season Standings Live</h3>
-                <p class="text-sm text-gray-400 mt-2 max-w-md mx-auto">Standings will be updated live as tournament matches conclude. Register for upcoming events to claim your place on the podium!</p>
+                <h3 class="font-orbitron font-bold text-white text-lg">Season 1 Rankings In Progress</h3>
+                <p class="text-sm text-gray-400 mt-2 max-w-md mx-auto">Standings will be updated live as tournament matches conclude. Compete in upcoming events to claim your place on the podium!</p>
             </div>
         `;
-        const tbody = document.getElementById('leaderboard-tbody');
-        if (tbody) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="p-8 text-center text-gray-400">
-                        <i class="fa-solid fa-trophy text-2xl text-cyan-400 mb-2 block"></i>
-                        <p class="text-sm font-semibold">No tournament standings recorded yet.</p>
-                        <p class="text-xs text-gray-500 mt-1">Official player rankings will be calculated from completed match results.</p>
-                    </td>
-                </tr>
-            `;
-        }
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="p-8 text-center text-gray-400">
+                    <i class="fa-solid fa-trophy text-2xl text-cyan-400 mb-2 block"></i>
+                    <p class="text-sm font-semibold">No tournament standings recorded yet.</p>
+                    <p class="text-xs text-gray-500 mt-1">Official player rankings will be calculated from completed tournament match results.</p>
+                </td>
+            </tr>
+        `;
         return;
     }
-        const top3 = [state.leaderboard[1], state.leaderboard[0], state.leaderboard[2]]; // 2nd, 1st, 3rd layout
-        top3.forEach((p, idx) => {
-            const actualRank = p === state.leaderboard[0] ? 1 : (p === state.leaderboard[1] ? 2 : 3);
-            const card = document.createElement('div');
-            card.className = `bg-cyber-card/90 rounded-2xl border p-6 text-center space-y-3 relative tactical-cut transition-transform hover:-translate-y-2 ${actualRank === 1 ? 'border-amber-400 glow-gold sm:-translate-y-4' : 'border-cyber-border glow-cyan'}`;
-            card.innerHTML = `
-                <div class="absolute top-3 right-3 w-8 h-8 rounded-full ${actualRank === 1 ? 'bg-amber-400 text-black font-black' : 'bg-cyber-dark text-gray-300 font-bold'} text-xs flex items-center justify-center">${actualRank === 1 ? '👑' : '#' + actualRank}</div>
-                <img src="${p.avatar_url}" alt="${p.username}" class="w-18 h-18 rounded-2xl object-cover mx-auto border-2 ${actualRank === 1 ? 'border-amber-400' : 'border-cyan-400'} glow-cyan">
-                <div>
-                    <h4 class="font-orbitron font-extrabold text-white text-lg">${escapeHtml(p.username)}</h4>
-                    <p class="text-xs ${actualRank === 1 ? 'text-amber-400 font-black' : 'text-cyan-400 font-bold'}">${actualRank === 1 ? '👑 Champion Grandmaster' : (actualRank === 2 ? '⚡ Elite Pro' : '🔥 Sharpshooter')}</p>
-                </div>
-                <div class="flex justify-around text-xs py-2.5 bg-cyber-dark/80 rounded-xl border border-cyber-border font-bold">
-                    <div><span class="text-gray-400 block text-[10px] font-normal uppercase">Elo MMR</span><span class="font-mono text-white">${p.elo_rating}</span></div>
-                    <div><span class="text-gray-400 block text-[10px] font-normal uppercase">Win Rate</span><span class="text-cyan-400">${p.win_rate}%</span></div>
-                    <div><span class="text-gray-400 block text-[10px] font-normal uppercase">Trophies</span><span class="text-green-400">🏆 ${p.tournaments_won}</span></div>
-                </div>
-            `;
-            podiumContainer.appendChild(card);
-        });
 
-    const tbody = document.getElementById('leaderboard-tbody');
-    tbody.innerHTML = '';
-    state.leaderboard.forEach((p, index) => {
+    const count = filtered.length;
+    let podiumPlayers = [];
+    if (count >= 3) {
+        podiumPlayers = [
+            { player: filtered[1], rank: 2 },
+            { player: filtered[0], rank: 1 },
+            { player: filtered[2], rank: 3 }
+        ];
+    } else if (count === 2) {
+        podiumPlayers = [
+            { player: filtered[1], rank: 2 },
+            { player: filtered[0], rank: 1 }
+        ];
+    } else if (count === 1) {
+        podiumPlayers = [
+            { player: filtered[0], rank: 1 }
+        ];
+    }
+
+    podiumPlayers.forEach(({ player: p, rank: actualRank }) => {
+        if (!p) return;
+        const card = document.createElement('div');
+        card.className = `bg-cyber-card/90 rounded-2xl border p-6 text-center space-y-3 relative tactical-cut transition-transform hover:-translate-y-2 ${actualRank === 1 ? 'border-amber-400 glow-gold sm:-translate-y-4' : 'border-cyber-border glow-cyan'}`;
+        card.innerHTML = `
+            <div class="absolute top-3 right-3 w-8 h-8 rounded-full ${actualRank === 1 ? 'bg-amber-400 text-black font-black' : 'bg-cyber-dark text-gray-300 font-bold'} text-xs flex items-center justify-center">${actualRank === 1 ? '👑' : '#' + actualRank}</div>
+            <img src="${p.avatar_url || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(p.username || 'player'))}" alt="${escapeHtml(p.username)}" class="w-18 h-18 rounded-2xl object-cover mx-auto border-2 ${actualRank === 1 ? 'border-amber-400' : 'border-cyan-400'} glow-cyan">
+            <div>
+                <h4 class="font-orbitron font-extrabold text-white text-lg">${escapeHtml(p.username)}</h4>
+                <p class="text-xs ${actualRank === 1 ? 'text-amber-400 font-black' : 'text-cyan-400 font-bold'}">${actualRank === 1 ? '👑 Season Leader' : (actualRank === 2 ? '⚡ Elite Contender' : '🔥 Ranked Challenger')}</p>
+            </div>
+            <div class="flex justify-around text-xs py-2.5 bg-cyber-dark/80 rounded-xl border border-cyber-border font-bold">
+                <div><span class="text-gray-400 block text-[10px] font-normal uppercase">Elo MMR</span><span class="font-mono text-white">${p.elo_rating || 1200}</span></div>
+                <div><span class="text-gray-400 block text-[10px] font-normal uppercase">Win Rate</span><span class="text-cyan-400">${p.win_rate != null ? p.win_rate : (p.matches_played > 0 ? Math.round((p.matches_won / p.matches_played) * 100) : 0)}%</span></div>
+                <div><span class="text-gray-400 block text-[10px] font-normal uppercase">Trophies</span><span class="text-green-400">🏆 ${p.tournaments_won || 0}</span></div>
+            </div>
+        `;
+        podiumContainer.appendChild(card);
+    });
+
+    filtered.forEach((p, index) => {
+        if (!p) return;
         const row = document.createElement('tr');
         row.className = 'hover:bg-cyber-dark/60 transition-colors';
+        const winRate = p.win_rate != null ? p.win_rate : (p.matches_played > 0 ? Math.round((p.matches_won / p.matches_played) * 100) : 0);
+        const earnings = p.prize_earnings != null ? `₹${Number(p.prize_earnings).toLocaleString('en-IN')}` : `₹${((p.tournaments_won || 0) * 25000).toLocaleString('en-IN')}`;
         row.innerHTML = `
             <td class="p-4 font-orbitron font-black text-cyan-400">#${index + 1}</td>
             <td class="p-4 flex items-center gap-3">
-                <img src="${p.avatar_url}" alt="${p.username}" class="w-10 h-10 rounded-xl object-cover border border-cyan-400/40">
+                <img src="${p.avatar_url || ('https://api.dicebear.com/7.x/bottts/svg?seed=' + encodeURIComponent(p.username || 'player'))}" alt="${escapeHtml(p.username)}" class="w-10 h-10 rounded-xl object-cover border border-cyan-400/40">
                 <div>
                     <p class="font-extrabold text-white text-base">${escapeHtml(p.username)}</p>
-                    <p class="text-xs text-gray-400">${p.tournaments_won > 4 ? '👑 Grandmaster' : '💎 Master'}</p>
+                    <p class="text-xs text-gray-400">${(p.tournaments_won || 0) > 0 ? '👑 Tournament Victor' : '🎮 Verified Competitor'}</p>
                 </div>
             </td>
-            <td class="p-4 text-gray-300 font-semibold">Valorant / BGMI</td>
-            <td class="p-4 font-mono font-bold text-cyan-400">${p.elo_rating}</td>
-            <td class="p-4 font-bold text-gray-200">${p.win_rate}%</td>
-            <td class="p-4 text-right font-orbitron font-black text-green-400 text-base">₹${(p.tournaments_won * 25000 + 15000).toLocaleString('en-IN')}</td>
+            <td class="p-4 text-gray-300 font-semibold">${p.game || p.fav_game || 'Multi-Title'}</td>
+            <td class="p-4 font-mono font-bold text-cyan-400">${p.elo_rating || 1200}</td>
+            <td class="p-4 font-bold text-gray-200">${winRate}%</td>
+            <td class="p-4 text-right font-orbitron font-black text-green-400 text-base">${earnings}</td>
         `;
         tbody.appendChild(row);
     });
@@ -3267,12 +3132,12 @@ async function loadVideos() {
         const res = await fetch("/api/videos?is_short=true");
         if (res.ok) {
             const data = await res.json();
-            state.videos = (data && data.length > 0) ? data : DEMO_VIDEOS;
+            state.videos = (Array.isArray(data)) ? data : [];
         } else {
-            state.videos = DEMO_VIDEOS;
+            state.videos = [];
         }
     } catch (e) {
-        state.videos = DEMO_VIDEOS;
+        state.videos = [];
     }
     renderVideos();
 }
@@ -3312,7 +3177,7 @@ function renderVideos() {
             <div class="p-6 space-y-4 flex-1 flex flex-col justify-between">
                 <div>
                     <h4 class="font-orbitron font-bold text-white text-base line-clamp-1 group-hover:text-cyan-400 transition-colors">${v.title}</h4>
-                    <p class="text-xs text-gray-400 mt-1">Uploaded by <span class="text-cyan-400 font-bold">@${v.creator_name || 'Wolfy'}</span></p>
+                    <p class="text-xs text-gray-400 mt-1">Uploaded by <span class="text-cyan-400 font-bold">@${v.creator_name || 'ArenaPro'}</span></p>
                 </div>
                 <div class="flex items-center justify-between pt-4 border-t border-cyber-border/80 text-sm">
                     <button onclick="likeVideo('${v.id}')" class="flex items-center gap-2 text-gray-400 hover:text-pink-400 transition-colors font-bold">
@@ -3336,8 +3201,8 @@ function launchVideoPlayer(vId) {
 
     const vidEl = document.getElementById("player-video-element");
     vidEl.src = video.video_url;
-    document.getElementById("player-creator-avatar").src = video.creator_avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=Wolfy";
-    document.getElementById("player-creator-name").innerText = `@${video.creator_name || 'Wolfy'}`;
+    document.getElementById("player-creator-avatar").src = video.creator_avatar || "https://api.dicebear.com/7.x/bottts/svg?seed=NexusArena";
+    document.getElementById("player-creator-name").innerText = `@${video.creator_name || 'ArenaPro'}`;
     document.getElementById("player-game-tag").innerText = video.game_id.toUpperCase();
     document.getElementById("player-clip-title").innerText = video.title;
     document.getElementById("player-likes-count").innerText = video.likes_count;
@@ -4678,7 +4543,7 @@ async function triggerOTPSimulation() {
     if (res.ok) {
         const d = await res.json();
         openModal("modal-otp");
-        showToast(`OTP dispatched! (Demo code: ${d.debug_demo_code})`, "info");
+        showToast("Security verification code dispatched to your registered number.", "info");
     } else {
         openModal("modal-otp");
     }
@@ -5890,7 +5755,7 @@ const DEFAULT_STARTER_CUSTOM_ROLES = [
         can_organize: true,
         can_manage_users: false,
         description: 'Authorized to create, seed, and oversee competitive esports brackets & event scheduling.',
-        created_by: 'Wolfy',
+        created_by: 'Administrator',
         created_at: new Date().toISOString()
     },
     {
@@ -5903,7 +5768,7 @@ const DEFAULT_STARTER_CUSTOM_ROLES = [
         can_organize: false,
         can_manage_users: false,
         description: 'Adjudicates match disputes, reviews player score screenshots, and settles bracket points.',
-        created_by: 'Wolfy',
+        created_by: 'Administrator',
         created_at: new Date().toISOString()
     },
     {
@@ -5916,7 +5781,7 @@ const DEFAULT_STARTER_CUSTOM_ROLES = [
         can_organize: false,
         can_manage_users: false,
         description: 'Official streamer with showcase highlight publishing & verified broadcast badge.',
-        created_by: 'Wolfy',
+        created_by: 'Administrator',
         created_at: new Date().toISOString()
     },
     {
@@ -5929,7 +5794,7 @@ const DEFAULT_STARTER_CUSTOM_ROLES = [
         can_organize: false,
         can_manage_users: false,
         description: 'Top-tier platform patron with community ambassador status and coin rewards.',
-        created_by: 'Wolfy',
+        created_by: 'Administrator',
         created_at: new Date().toISOString()
     }
 ];
@@ -6473,11 +6338,11 @@ async function submitAccountActivation() {
 }
 
 const MASTER_ADMIN_EMERGENCY_KEYS = [
-    "WOLFY-SEC-7942-8812",
-    "WOLFY-SEC-9921-3401",
-    "WOLFY-SEC-4819-2041",
-    "WOLFY-SEC-6391-7729",
-    "WOLFY-SEC-1104-5823"
+    "NEXUS-SEC-7942-8812",
+    "NEXUS-SEC-9921-3401",
+    "NEXUS-SEC-4819-2041",
+    "NEXUS-SEC-6391-7729",
+    "NEXUS-SEC-1104-5823"
 ];
 
 function getAdminSecurityBindings() {
@@ -6486,7 +6351,7 @@ function getAdminSecurityBindings() {
         if (stored) return JSON.parse(stored);
     } catch (e) {}
     return {
-        bound_email: "wolfy@nexusarena.gg",
+        bound_email: "admin@nexusgamingarena.online",
         bound_phone: "+91 9876543210",
         two_factor_secret: "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
         two_factor_enabled: true,
@@ -6548,20 +6413,20 @@ function downloadRecoveryKeys() {
     playCyberSound('click');
     const bindings = getAdminSecurityBindings();
     const content = `=====================================================
-NEXUS ARENA - MAIN ADMIN (WOLFY) EMERGENCY RECOVERY KEYS
+NEXUS ARENA - MASTER ADMIN EMERGENCY RECOVERY KEYS
 =====================================================
-Account: Wolfy (Master Executive Overseer)
+Account: ${state.user ? state.user.username : 'Administrator'} (Master Executive Overseer)
 Bound Phone: ${bindings.bound_phone}
 Bound Email: ${bindings.bound_email}
 Authenticator App: Google Authenticator / Authy / Microsoft Authenticator
 Generated: ${new Date().toUTCString()}
 -----------------------------------------------------
 EMERGENCY MASTER RECOVERY KEYS (ONE-TIME USE EACH):
-1. ${bindings.recovery_codes[0] || 'WOLFY-SEC-7942-8812'}
-2. ${bindings.recovery_codes[1] || 'WOLFY-SEC-9921-3401'}
-3. ${bindings.recovery_codes[2] || 'WOLFY-SEC-4819-2041'}
-4. ${bindings.recovery_codes[3] || 'WOLFY-SEC-6391-7729'}
-5. ${bindings.recovery_codes[4] || 'WOLFY-SEC-1104-5823'}
+1. ${bindings.recovery_codes[0] || 'NEXUS-SEC-7942-8812'}
+2. ${bindings.recovery_codes[1] || 'NEXUS-SEC-9921-3401'}
+3. ${bindings.recovery_codes[2] || 'NEXUS-SEC-4819-2041'}
+4. ${bindings.recovery_codes[3] || 'NEXUS-SEC-6391-7729'}
+5. ${bindings.recovery_codes[4] || 'NEXUS-SEC-1104-5823'}
 -----------------------------------------------------
 INSTRUCTIONS:
 In case you lose your phone or Google Authenticator app,
@@ -6693,7 +6558,7 @@ async function handleResetPassword(e) {
             localStorage.setItem("nexus_registered_gamers", JSON.stringify(registeredUsers));
         } else if (isMain) {
             registeredUsers.push({
-                username: "Wolfy",
+                username: bindings.bound_username || (state.user ? state.user.username : "admin"),
                 role: "ADMIN",
                 email: bindings.bound_email,
                 phone: bindings.bound_phone,
@@ -6722,17 +6587,17 @@ function launchWhatsAppSupport() {
     playCyberSound('click');
     if (!state.user) {
         playCyberSound('error');
-        showToast("⚠️ Registered Gamers Only: Please sign in or register your account to chat directly with Admin Wolfy on WhatsApp.", "info");
+        showToast("⚠️ Registered Gamers Only: Please sign in or register your account for WhatsApp VIP Support.", "info");
         openLoginModal();
         return;
     }
     const username = state.user.username || "Registered Gamer";
     const role = state.user.role || "PLAYER";
     const phone = state.user.phone || "+91 9876543210";
-    const text = encodeURIComponent(`Hello Admin Wolfy & Nexus Arena Team! I am registered gamer "${username}" (Role: ${role}, Phone: ${phone}). I need assistance with: `);
+    const text = encodeURIComponent(`Hello Nexus Arena Support Team! I am registered gamer "${username}" (Role: ${role}, Phone: ${phone}). I need assistance with: `);
     const waUrl = `https://wa.me/919876543210?text=${text}`;
     playCyberSound('success');
-    showToast(`Redirecting ${username} to Admin Wolfy on WhatsApp...`, "success");
+    showToast(`Connecting ${username} to Nexus Arena Support on WhatsApp...`, "success");
     window.open(waUrl, "_blank");
 }
 
@@ -6868,34 +6733,44 @@ async function loadPopularityTrends() {
         }
     } catch (e) {}
 
-    if (!data || !data.top_trending_tournaments) {
+    if (!data) {
         data = DEMO_POPULARITY_TRENDS;
     }
 
     try {
         // 1. Render Top Trending Tournaments List
         const tList = document.getElementById("trends-top-tournaments-list");
-        if (tList && data.top_trending_tournaments) {
-            tList.innerHTML = data.top_trending_tournaments.slice(0, 3).map((t, idx) => {
-                const hype = t.hype || {};
-                return `
-                    <div class="flex items-center justify-between p-3 rounded-xl bg-cyber-dark/80 border border-cyber-border hover:border-pink-500/50 transition-all cursor-pointer group" onclick="viewTournamentBracket('${t.id}')">
-                        <div class="flex items-center gap-3">
-                            <span class="w-6 h-6 rounded-lg bg-pink-500/20 text-pink-400 font-orbitron font-black text-xs flex items-center justify-center border border-pink-500/40">#${idx + 1}</span>
-                            <div>
-                                <h5 class="text-xs font-bold text-white group-hover:text-pink-400 transition-colors line-clamp-1">${t.title}</h5>
-                                <p class="text-[10px] text-gray-400">${t.game_name} &bull; ₹${Math.round(t.prize_pool_dollars).toLocaleString('en-IN')}</p>
+        if (tList) {
+            const list = data.top_trending_tournaments || [];
+            if (list.length > 0) {
+                tList.innerHTML = list.slice(0, 3).map((t, idx) => {
+                    const hype = t.hype || {};
+                    return `
+                        <div class="flex items-center justify-between p-3 rounded-xl bg-cyber-dark/80 border border-cyber-border hover:border-pink-500/50 transition-all cursor-pointer group" onclick="viewTournamentBracket('${t.id}')">
+                            <div class="flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-lg bg-pink-500/20 text-pink-400 font-orbitron font-black text-xs flex items-center justify-center border border-pink-500/40">#${idx + 1}</span>
+                                <div>
+                                    <h5 class="text-xs font-bold text-white group-hover:text-pink-400 transition-colors line-clamp-1">${escapeHtml(t.title)}</h5>
+                                    <p class="text-[10px] text-gray-400">${escapeHtml(t.game_name || t.game_title || 'Esports')} &bull; ₹${Math.round(t.prize_pool_dollars || 0).toLocaleString('en-IN')}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase" style="background:${hype.badge_color || '#ff007f'}22; color:${hype.badge_color || '#ff007f'}; border:1px solid ${hype.badge_color || '#ff007f'}55;">
+                                    ${hype.hype_score || 85}%
+                                </span>
+                                <p class="text-[9px] text-gray-400 pt-0.5">${hype.trend_status || 'Viral'}</p>
                             </div>
                         </div>
-                        <div class="text-right">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-black uppercase" style="background:${hype.badge_color || '#ff007f'}22; color:${hype.badge_color || '#ff007f'}; border:1px solid ${hype.badge_color || '#ff007f'}55;">
-                                ${hype.hype_score || 85}%
-                            </span>
-                            <p class="text-[9px] text-gray-400 pt-0.5">${hype.trend_status || 'Viral'}</p>
-                        </div>
+                    `;
+                }).join("");
+            } else {
+                tList.innerHTML = `
+                    <div class="p-4 rounded-xl bg-cyber-dark/60 border border-cyber-border text-center space-y-1.5">
+                        <p class="text-xs font-bold text-gray-300">Arena Open &bull; Season 1</p>
+                        <p class="text-[10px] text-gray-400">Upcoming tournaments will appear here once scheduled.</p>
                     </div>
                 `;
-            }).join("");
+            }
         }
 
         // 2. Render Top Trending Games Meta
@@ -6907,13 +6782,13 @@ async function loadPopularityTrends() {
                         <div class="flex items-center gap-3">
                             <span class="text-xl">${g.icon || '🎮'}</span>
                             <div>
-                                <h5 class="text-xs font-bold text-white">${g.name}</h5>
-                                <p class="text-[10px] text-cyan-400 font-bold">${g.meta_tag} &bull; ${g.momentum_pct}</p>
+                                <h5 class="text-xs font-bold text-white">${escapeHtml(g.name)}</h5>
+                                <p class="text-[10px] text-cyan-400 font-bold">${escapeHtml(g.meta_tag || 'COMPETITIVE')} &bull; ${escapeHtml(g.momentum_pct || '+12%')}</p>
                             </div>
                         </div>
                         <div class="text-right">
-                            <span class="font-orbitron font-extrabold text-sm text-cyan-400">${g.popularity_score}</span>
-                            <p class="text-[9px] text-gray-400">${g.tournament_count} Arenas</p>
+                            <span class="font-orbitron font-extrabold text-sm text-cyan-400">${g.popularity_score || 50}</span>
+                            <p class="text-[9px] text-gray-400">${g.tournament_count || 0} Arenas</p>
                         </div>
                     </div>
                 `;
@@ -6928,16 +6803,16 @@ async function loadPopularityTrends() {
                 <div class="grid grid-cols-2 gap-2 text-center">
                     <div class="p-2.5 rounded-xl bg-cyber-dark/80 border border-cyber-border">
                         <p class="text-[10px] text-gray-400 uppercase font-bold">Active Gamers</p>
-                        <p class="font-orbitron font-extrabold text-sm text-amber-400">${Number(p.active_gamers).toLocaleString('en-IN')}+</p>
+                        <p class="font-orbitron font-extrabold text-sm text-amber-400">${Number(p.active_gamers || 1).toLocaleString('en-IN')}</p>
                     </div>
                     <div class="p-2.5 rounded-xl bg-cyber-dark/80 border border-cyber-border">
                         <p class="text-[10px] text-gray-400 uppercase font-bold">Total Prize Escrow</p>
-                        <p class="font-orbitron font-extrabold text-sm text-cyan-400">₹${Math.round(p.total_prize_pool_dollars).toLocaleString('en-IN')}</p>
+                        <p class="font-orbitron font-extrabold text-sm text-cyan-400">₹${Math.round(p.total_prize_pool_dollars || 0).toLocaleString('en-IN')}</p>
                     </div>
                 </div>
                 <div class="p-2.5 rounded-xl bg-gradient-to-r from-amber-950/40 to-cyber-dark border border-amber-500/40 flex items-center justify-between text-xs">
-                    <span class="text-gray-300 font-bold"><i class="fa-solid fa-fire text-amber-400 mr-1.5"></i> Trending #1 Event:</span>
-                    <span class="text-amber-400 font-black line-clamp-1 max-w-[140px]">${p.trending_now_label}</span>
+                    <span class="text-gray-300 font-bold"><i class="fa-solid fa-fire text-amber-400 mr-1.5"></i> Platform Status:</span>
+                    <span class="text-amber-400 font-black line-clamp-1 max-w-[140px]">${escapeHtml(p.trending_now_label || 'Season 1 Live')}</span>
                 </div>
             `;
         }
@@ -6984,7 +6859,7 @@ async function openAdminModal(tabName) {
     playCyberSound('click');
     if (!isAdminUser()) {
         playCyberSound('error');
-        showToast("⛔ Access Denied: Admin (Wolfy) and Co-Admin privileges required. Normal gamers have access to tournament arenas only.", "error");
+        showToast("⛔ Access Denied: Administrator privileges required.", "error");
         return;
     }
     switchTab('admin');
@@ -7051,8 +6926,8 @@ async function loadAdminTournamentsTab() {
             }
         } catch (e) {}
     }
-    if (!tournaments || tournaments.length === 0) {
-        tournaments = DEMO_TOURNAMENTS;
+    if (!tournaments) {
+        tournaments = [];
     }
     state.tournaments = tournaments;
 
@@ -7223,16 +7098,14 @@ async function openRosterModal(tournamentId) {
     } catch (e) {}
 
     if (!roster || roster.length === 0) {
-        roster = [
-            { seed: 1, username: "Wolfy", elo_rating: 2450, status: "READY", phone_number: "+91 9876543210", email: "wolfy@nexusarena.com" },
-            { seed: 2, username: "PlayerPro", elo_rating: 2180, status: "READY", phone_number: "+91 9123456789", email: "pro@gamer.com" },
-            { seed: 3, username: "ViperQueen", elo_rating: 2100, status: "READY", phone_number: "+91 9888877777", email: "viper@nexus.in" },
-            { seed: 4, username: "ShadowHunter", elo_rating: 1980, status: "READY", phone_number: "+91 9777766666", email: "shadow@nexus.in" },
-            { seed: 5, username: "CyberSamurai", elo_rating: 1920, status: "READY", phone_number: "+91 9666655555", email: "samurai@nexus.in" },
-            { seed: 6, username: "PhoenixSniper", elo_rating: 1890, status: "READY", phone_number: "+91 9555544444", email: "sniper@nexus.in" },
-            { seed: 7, username: "ApexPredator", elo_rating: 1840, status: "READY", phone_number: "+91 9444433333", email: "apex@nexus.in" },
-            { seed: 8, username: "GhostRider", elo_rating: 1780, status: "READY", phone_number: "+91 9333322222", email: "ghost@nexus.in" }
-        ];
+        container.innerHTML = `
+            <div class="col-span-full py-8 text-center text-gray-400">
+                <i class="fa-solid fa-users text-2xl text-cyan-400/50 mb-2 block"></i>
+                <p class="text-sm font-semibold text-gray-300">No registered participants yet</p>
+                <p class="text-xs text-gray-500 mt-1">Registrations are open for Season 1! Join this tournament to be seeded on the bracket.</p>
+            </div>
+        `;
+        return;
     }
 
     container.innerHTML = roster.map(p => `
@@ -8050,7 +7923,7 @@ function exportEsportsDatabaseBackup() {
         exported_at: new Date().toISOString(),
         platform: "Nexus Gaming Arena",
         hosting: "Google Firebase Hosting",
-        tournaments: state.tournaments || DEMO_TOURNAMENTS,
+        tournaments: state.tournaments || [],
         games_catalog: getDynamicGames(),
         user_session: state.user,
         wallet_balance: state.walletBalance,
@@ -8470,7 +8343,7 @@ async function loadAdminPaymentsTab() {
                     <form onsubmit="handleAdminRefund(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-gray-300">Gamer Username or Phone</label>
-                            <input type="text" id="adm-refund-username" required placeholder="e.g. PlayerPro" value="PlayerPro" class="w-full bg-cyber-card border border-cyber-border rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-green-400">
+                            <input type="text" id="adm-refund-username" required placeholder="Gamer username or phone" value="" class="w-full bg-cyber-card border border-cyber-border rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-green-400">
                         </div>
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-gray-300">Amount to Credit (₹ INR)</label>
@@ -8783,7 +8656,7 @@ async function loadAdminCoinsTab() {
                 <form onsubmit="handleAdminGrantCoins(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-gray-300">Gamer Username</label>
-                        <input type="text" id="adm-coins-username" required placeholder="e.g. PlayerPro" value="PlayerPro" class="w-full bg-cyber-card border border-cyber-border rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-amber-400">
+                        <input type="text" id="adm-coins-username" required placeholder="Gamer username" value="" class="w-full bg-cyber-card border border-cyber-border rounded-xl px-3 py-2 text-xs text-gray-200 focus:outline-none focus:border-amber-400">
                     </div>
                     <div class="space-y-1">
                         <label class="text-xs font-bold text-gray-300">Coins Amount (NC)</label>
@@ -8951,7 +8824,7 @@ async function loadAdminTrendsTab() {
                 { category: "Tactical FPS", share_pct: 35 },
                 { category: "Sports/Action", share_pct: 20 }
             ],
-            tournaments_monitoring_matrix: (state.tournaments || DEMO_TOURNAMENTS).slice(0, 5).map(t => ({
+            tournaments_monitoring_matrix: (state.tournaments || []).slice(0, 5).map(t => ({
                 title: t.title,
                 game_icon: "🎮",
                 game_name: t.game_title,
@@ -9341,7 +9214,7 @@ async function loadHomepageSections() {
 function openAdminDelegationFor(sectionKey) {
     if (!isAdminUser()) {
         playCyberSound('error');
-        showToast("⛔ Access Denied: Admin (Wolfy) and Co-Admin privileges required.", "error");
+        showToast("⛔ Access Denied: Administrator privileges required.", "error");
         return;
     }
     playCyberSound('click');
@@ -9359,14 +9232,13 @@ function openAdminDelegationFor(sectionKey) {
 
 const DEFAULT_SECTIONS_DELEGATION = {
     candidate_managers: [
-        { username: "Wolfy", role: "ADMIN" },
-        { username: "NexusCoAdmin", role: "CO_ADMIN" }
+        { username: "admin", role: "ADMIN" }
     ],
     sections: [
-        { section_key: "tournaments", section_number: 1, section_name: "Tournaments & Matchmaking", description: "Automated Swiss & single-elimination brackets, MMR matchmaking, and anti-cheat arbitration.", status: "ACTIVE", assigned_username: "Wolfy", assigned_manager_title: "Master Tournament Director", responsibilities: "Oversee brackets, approve prize pools, resolve disputes.", updated_at: new Date().toISOString() },
-        { section_key: "coin_hub", section_number: 2, section_name: "Coin Hub & Daily Quests", description: "Nexus coins economy, daily spin-the-wheel streaks, sponsored reward chests, and conversion store.", status: "ACTIVE", assigned_username: "NexusCoAdmin", assigned_manager_title: "Community Rewards Specialist", responsibilities: "Audit XP rewards, review daily quest completions.", updated_at: new Date().toISOString() },
-        { section_key: "leaderboard", section_number: 3, section_name: "Leaderboard & MMR Ratings", description: "Top 100 global hall of fame, Tier progression (Bronze to Radiant God), and seasonal trophies.", status: "ACTIVE", assigned_username: "NexusCoAdmin", assigned_manager_title: "Competitive Integrity Officer", responsibilities: "Investigate smurfing, verify Elo calculations.", updated_at: new Date().toISOString() },
-        { section_key: "clips", section_number: 4, section_name: "Gaming Clips & Community Reels", description: "Esports highlights, community clips feed, TikTok-style short clips player, and viral engagement.", status: "ACTIVE", assigned_username: "NexusCoAdmin", assigned_manager_title: "Broadcast & Media Producer", responsibilities: "Curate viral plays, monitor clips content.", updated_at: new Date().toISOString() }
+        { section_key: "tournaments", section_number: 1, section_name: "Tournaments & Matchmaking", description: "Automated Swiss & single-elimination brackets, MMR matchmaking, and anti-cheat arbitration.", status: "ACTIVE", assigned_username: "admin", assigned_manager_title: "Master Tournament Director", responsibilities: "Oversee brackets, approve prize pools, resolve disputes.", updated_at: new Date().toISOString() },
+        { section_key: "coin_hub", section_number: 2, section_name: "Coin Hub & Daily Quests", description: "Nexus coins economy, daily spin-the-wheel streaks, sponsored reward chests, and conversion store.", status: "ACTIVE", assigned_username: "admin", assigned_manager_title: "Community Rewards Specialist", responsibilities: "Audit XP rewards, review daily quest completions.", updated_at: new Date().toISOString() },
+        { section_key: "leaderboard", section_number: 3, section_name: "Leaderboard & MMR Ratings", description: "Top 100 global hall of fame, Tier progression (Bronze to Radiant God), and seasonal trophies.", status: "ACTIVE", assigned_username: "admin", assigned_manager_title: "Competitive Integrity Officer", responsibilities: "Investigate smurfing, verify Elo calculations.", updated_at: new Date().toISOString() },
+        { section_key: "clips", section_number: 4, section_name: "Gaming Clips & Community Reels", description: "Esports highlights, community clips feed, TikTok-style short clips player, and viral engagement.", status: "ACTIVE", assigned_username: "admin", assigned_manager_title: "Broadcast & Media Producer", responsibilities: "Curate viral plays, monitor clips content.", updated_at: new Date().toISOString() }
     ]
 };
 
@@ -9568,7 +9440,7 @@ async function loadAdminRolesTab() {
     if (!container) return;
 
     const isMain = isMainAdminUser();
-    const currentUsername = state.user ? state.user.username : "Wolfy";
+    const currentUsername = (state.user && state.user.username) ? state.user.username : "admin";
 
     // 1. Fetch or get roles
     let customRoles = getCustomRoleLevels();
@@ -9603,14 +9475,9 @@ async function loadAdminRolesTab() {
             regGamers = JSON.parse(localStorage.getItem("nexus_registered_gamers") || "[]");
         } catch (e) {}
 
-        const starterGamers = [
-            { id: "usr_wolfy", username: "Wolfy", email: "wolfy@gaming.com", role: "ADMIN", custom_title: "Master Platform Overseer", elo_rating: 2850, avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=Wolfy" },
-            { id: "usr_coadmin", username: "NexusCoAdmin", email: "coadmin@nexusarena.gg", role: "CO_ADMIN", custom_title: "Tournament Operations Manager", elo_rating: 2300, avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=coadmin" },
-            { id: "usr_cyberphoenix", username: "CyberPhoenix", email: "cyberphoenix@gaming.com", role: "PLAYER", custom_title: null, elo_rating: 2150, avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=CyberPhoenix" },
-            { id: "usr_viperqueen", username: "ViperQueen", email: "viper@gaming.com", role: "PLAYER", custom_title: null, elo_rating: 2020, avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=ViperQueen" },
-            { id: "usr_blazesniper", username: "BlazeSniper", email: "blaze@gaming.com", role: "PLAYER", custom_title: null, elo_rating: 1890, avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=BlazeSniper" },
-            { id: "usr_admin", username: "admin", email: "admin@nexusarena.gg", role: "ADMIN", custom_title: "Security Administrator", elo_rating: 2600, avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=admin" }
-        ];
+        const starterGamers = (state.user) ? [
+            { id: state.user.id || "usr_admin", username: state.user.username || "admin", email: state.user.email || "admin@nexusgamingarena.online", role: state.user.role || "ADMIN", custom_title: state.user.custom_title || "Administrator", elo_rating: state.user.elo_rating || 2600, avatar_url: state.user.avatar_url || "https://api.dicebear.com/7.x/bottts/svg?seed=admin" }
+        ] : [];
 
         const map = new Map();
         starterGamers.forEach(g => map.set(g.username.toLowerCase(), g));
@@ -9661,8 +9528,8 @@ async function loadAdminRolesTab() {
                     </h4>
                     <p class="text-xs text-gray-300 max-w-2xl">
                         ${isMain
-                            ? 'As the Main Platform Admin (Wolfy), you hold supreme authority to promote or demote any user to Admin, Co-Admin, Moderator, Player, or any custom role level created by you.'
-                            : 'Only Master Admin Wolfy has the constitutional power to promote or demote users or establish new role levels. Co-Admins hold operational viewing privileges.'}
+                            ? 'As the Platform Administrator, you hold supreme authority to promote or demote any user to Admin, Co-Admin, Moderator, Player, or any custom role level created by you.'
+                            : 'Only the Master Administrator has the constitutional power to promote or demote users or establish new role levels. Co-Admins hold operational viewing privileges.'}
                     </p>
                 </div>
                 <div class="flex items-center gap-3">
@@ -9802,7 +9669,7 @@ async function loadAdminRolesTab() {
                 <!-- Gamers Promotion Table / Cards -->
                 <div class="space-y-3" id="gamer-role-cards-container">
                     ${gamers.map(g => {
-                        const isTargetWolfy = (g.username || '').toLowerCase() === 'wolfy';
+                        const isTargetWolfy = (g.username || '').toLowerCase() === ((state.user && state.user.username) ? state.user.username.toLowerCase() : 'admin') || (g.role || '').toUpperCase() === 'ADMIN';
                         const currentRole = (g.role || 'PLAYER').toUpperCase();
                         const rMeta = findRoleMetadata(currentRole);
                         const bCls = colorBadgeMap[rMeta.badge_color] || colorBadgeMap.cyan;
@@ -9954,7 +9821,7 @@ async function handleCreateCustomRole(e) {
     const newRoleObj = {
         ...payload,
         icon: badgeColor === 'rose' ? 'fa-scale-balanced' : (badgeColor === 'purple' ? 'fa-video' : (badgeColor === 'amber' ? 'fa-star' : 'fa-trophy')),
-        created_by: state.user ? state.user.username : 'Wolfy',
+        created_by: (state.user && state.user.username) ? state.user.username : 'admin',
         created_at: new Date().toISOString()
     };
 
@@ -10013,13 +9880,13 @@ async function updateGamerRole(userId, username) {
     playCyberSound('click');
     if (!isMainAdminUser()) {
         playCyberSound('error');
-        showToast("⛔ Supreme Authority Required: Only Main Admin Wolfy can promote or demote users.", "error");
+        showToast("⛔ Supreme Authority Required: Only Master Administrator can promote or demote users.", "error");
         return;
     }
 
-    if (username.toLowerCase() === 'wolfy') {
+    if (username.toLowerCase() === 'admin' || (state.user && username.toLowerCase() === state.user.username.toLowerCase())) {
         playCyberSound('error');
-        showToast("⚠️ Master Admin Wolfy is protected and cannot be demoted.", "error");
+        showToast("⚠️ Master Admin is protected and cannot be demoted.", "error");
         return;
     }
 
@@ -10144,7 +10011,7 @@ async function loadAdminUsersTab() {
     if (!container) return;
 
     const isMain = isMainAdminUser();
-    const currentUsername = state.user ? state.user.username : "Wolfy";
+    const currentUsername = (state.user && state.user.username) ? state.user.username : "admin";
 
     // 1. Fetch growth analytics & users list in parallel
     let growth = null;
@@ -10187,16 +10054,24 @@ async function loadAdminUsersTab() {
         if (gamers.length === 0) {
             let regGamers = [];
             try { regGamers = JSON.parse(localStorage.getItem("nexus_registered_gamers") || "[]"); } catch (e) {}
-            const starterGamers = [
-                { id: "usr_wolfy", username: "Wolfy", email: "wolfy@nexusarena.gg", phone_number: "+91 9876543210", role: "ADMIN", custom_title: "Master Platform Overseer", elo_rating: 2850, nexus_coins: 14200, wallet_balance: 5400.0, status: "ACTIVE", phone_verified: 1, two_factor_enabled: 1, created_at: "2026-09-01T10:00:00Z", avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=Wolfy" },
-                { id: "usr_coadmin", username: "NexusCoAdmin", email: "coadmin@nexusarena.gg", phone_number: "+91 9811223344", role: "CO_ADMIN", custom_title: "Tournament Operations Manager", elo_rating: 2300, nexus_coins: 8200, wallet_balance: 2400.0, status: "ACTIVE", phone_verified: 1, two_factor_enabled: 1, created_at: "2026-09-15T12:00:00Z", avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=coadmin" },
-                { id: "usr_cyberphoenix", username: "CyberPhoenix", email: "cyberphoenix@gaming.com", phone_number: "+91 9123456789", role: "PLAYER", custom_title: "Sniper Ace", elo_rating: 2150, nexus_coins: 3400, wallet_balance: 850.0, status: "ACTIVE", phone_verified: 1, two_factor_enabled: 0, created_at: "2026-10-01T14:30:00Z", avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=CyberPhoenix" },
-                { id: "usr_viperqueen", username: "ViperQueen", email: "viper@gaming.com", phone_number: "+91 9988776655", role: "PLAYER", custom_title: "Broadcast & Media Specialist", elo_rating: 2020, nexus_coins: 5200, wallet_balance: 1200.0, status: "ACTIVE", phone_verified: 1, two_factor_enabled: 1, created_at: "2026-10-05T09:15:00Z", avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=ViperQueen" },
-                { id: "usr_blazesniper", username: "BlazeSniper", email: "blaze@gaming.com", phone_number: "+91 9877001122", role: "PLAYER", custom_title: null, elo_rating: 1890, nexus_coins: 1800, wallet_balance: 300.0, status: "ACTIVE", phone_verified: 0, two_factor_enabled: 0, created_at: "2026-10-08T18:20:00Z", avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=BlazeSniper" },
-                { id: "usr_cybersamurai", username: "CyberSamurai", email: "samurai@gaming.com", phone_number: "+91 9844332211", role: "PLAYER", custom_title: "Competitive Contender", elo_rating: 2240, nexus_coins: 6100, wallet_balance: 1550.0, status: "ACTIVE", phone_verified: 1, two_factor_enabled: 1, created_at: "2026-10-10T11:00:00Z", avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=CyberSamurai" },
-                { id: "usr_playerpro", username: "PlayerPro", email: "playerpro@gaming.com", phone_number: "+91 9900112233", role: "PLAYER", custom_title: "Pro Gamer", elo_rating: 1980, nexus_coins: 4300, wallet_balance: 920.0, status: "ACTIVE", phone_verified: 1, two_factor_enabled: 1, created_at: "2026-10-11T16:45:00Z", avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=PlayerPro" },
-                { id: "usr_toxicgamer", username: "ToxicSmurf", email: "toxic@cheater.gg", phone_number: "+91 9000000000", role: "PLAYER", custom_title: "Suspended for Investigation", elo_rating: 1100, nexus_coins: 50, wallet_balance: 0.0, status: "SUSPENDED", phone_verified: 0, two_factor_enabled: 0, created_at: "2026-10-12T08:00:00Z", avatar_url: "https://api.dicebear.com/7.x/bottts/svg?seed=toxic" }
-            ];
+            const starterGamers = (state.user) ? [
+                {
+                    id: state.user.id || "usr_admin",
+                    username: state.user.username || "admin",
+                    email: state.user.email || "admin@nexusgamingarena.online",
+                    phone_number: state.user.phone_number || state.user.phone || "+91 9800011122",
+                    role: state.user.role || "ADMIN",
+                    custom_title: state.user.custom_title || "Platform Administrator",
+                    elo_rating: state.user.elo_rating || 2600,
+                    nexus_coins: state.user.nexus_coins || state.nexusCoins || 0,
+                    wallet_balance: state.user.wallet_balance || state.walletBalance || 0.0,
+                    status: "ACTIVE",
+                    phone_verified: 1,
+                    two_factor_enabled: state.user.two_factor_enabled ? 1 : 0,
+                    created_at: state.user.created_at || new Date().toISOString(),
+                    avatar_url: state.user.avatar_url || "https://api.dicebear.com/7.x/bottts/svg?seed=admin"
+                }
+            ] : [];
             const m = new Map();
             starterGamers.forEach(g => m.set(g.username.toLowerCase(), g));
             regGamers.forEach(rg => {
@@ -10675,7 +10550,7 @@ function renderAdminUsersDirectoryRows(gamers, allRoles, isMain) {
     }
 
     return gamers.map(u => {
-        const isWolfy = (u.username || '').toLowerCase() === 'wolfy';
+        const isWolfy = (u.username || '').toLowerCase() === (state.user ? state.user.username.toLowerCase() : 'admin') || (u.role || '').toUpperCase() === 'ADMIN';
         const role = (u.role || 'PLAYER').toUpperCase();
         const roleColor = getRoleBadgeClass(role);
         const status = (u.status || 'ACTIVE').toUpperCase();
@@ -10860,8 +10735,9 @@ function filterAdminUsersDirectory() {
                 const rB = b.getAttribute("data-role") || "";
                 const uA = a.getAttribute("data-username") || "";
                 const uB = b.getAttribute("data-username") || "";
-                if (uA === "wolfy") return -1;
-                if (uB === "wolfy") return 1;
+                const masterU = (state.user && state.user.username) ? state.user.username.toLowerCase() : "admin";
+                if (uA === masterU || uA === "admin" || uA === "wolfy") return -1;
+                if (uB === masterU || uB === "admin" || uB === "wolfy") return 1;
                 const score = r => (r === "ADMIN" ? 1 : (r === "CO_ADMIN" ? 2 : (r === "MODERATOR" ? 3 : 4)));
                 return score(rA) - score(rB);
             }
@@ -10875,7 +10751,7 @@ function filterAdminUsersDirectory() {
 
 async function quickPromoteToCoAdmin(userId, username) {
     if (!isMainAdminUser()) {
-        showToast("Only Master Admin Wolfy can promote users to Co-Admin.", "error");
+        showToast("Only Master Administrator can promote users to Co-Admin.", "error");
         return;
     }
     playCyberSound('click');
@@ -10886,7 +10762,7 @@ async function quickPromoteToCoAdmin(userId, username) {
 
 async function updateUserRoleFromDirectory(userId, username) {
     if (!isMainAdminUser()) {
-        showToast("Only Master Admin Wolfy can change user roles.", "error");
+        showToast("Only Master Administrator can change user roles.", "error");
         return;
     }
     playCyberSound('click');
@@ -10954,7 +10830,7 @@ async function executeUserRoleUpdate(userId, username, newRole, customTitle) {
 
 async function toggleUserAccountStatus(userId, username, newStatus) {
     if (!isMainAdminUser()) {
-        showToast("Only Master Admin Wolfy can suspend or reactivate accounts.", "error");
+        showToast("Only Master Administrator can suspend or reactivate accounts.", "error");
         return;
     }
     playCyberSound('click');
@@ -11069,7 +10945,8 @@ async function loadAdminSecurityTab() {
         }
     } catch (e) {}
 
-    const totpUri = `otpauth://totp/NexusArena:Wolfy?secret=${bindings.two_factor_secret}&issuer=NexusArena`;
+    const currentAdmin = (state.user && state.user.username) ? state.user.username : "Administrator";
+    const totpUri = `otpauth://totp/NexusArena:${encodeURIComponent(currentAdmin)}?secret=${bindings.two_factor_secret}&issuer=NexusArena`;
     const qrSrc = bindings.qr_code || `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(totpUri)}`;
 
     container.innerHTML = `
@@ -11086,7 +10963,7 @@ async function loadAdminSecurityTab() {
                         </div>
                         <h4 class="font-orbitron font-extrabold text-2xl text-white">MAIN ADMIN SECURITY &amp; AUTHENTICATOR BINDING</h4>
                         <p class="text-xs text-gray-300 max-w-2xl">
-                            The Master Admin account (<strong class="text-amber-300">Wolfy</strong>) is permanently bound to verified hardware contacts and Google Authenticator. In case of password loss, account recovery is mathematically restricted to the bound device.
+                            The Master Admin account (<strong class="text-amber-300">${(state.user && state.user.username) ? state.user.username : "Administrator"}</strong>) is permanently bound to verified hardware contacts and Google Authenticator. In case of password loss, account recovery is mathematically restricted to the bound device.
                         </p>
                     </div>
                     <div class="flex items-center gap-3">
@@ -11399,11 +11276,11 @@ async function regenerateEmergencyCodes() {
 
     let bindings = getAdminSecurityBindings();
     const newCodes = [
-        `WOLFY-SEC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
-        `WOLFY-SEC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
-        `WOLFY-SEC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
-        `WOLFY-SEC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
-        `WOLFY-SEC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`
+        `NEXUS-SEC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+        `NEXUS-SEC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+        `NEXUS-SEC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+        `NEXUS-SEC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`,
+        `NEXUS-SEC-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`
     ];
 
     try {

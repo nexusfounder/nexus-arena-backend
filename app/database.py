@@ -333,20 +333,20 @@ def init_db():
         can_organize INTEGER DEFAULT 1,
         can_manage_users INTEGER DEFAULT 0,
         created_at TEXT NOT NULL,
-        created_by TEXT DEFAULT 'Wolfy'
+        created_by TEXT DEFAULT 'admin'
     );
     """)
 
     # Safe Schema Migrations for GamerFlick, Dynamic Games, and Tournament Lifecycle
     migrations = [
-        "ALTER TABLE users ADD COLUMN nexus_coins INTEGER DEFAULT 2450;",
-        "ALTER TABLE users ADD COLUMN referral_code TEXT DEFAULT 'WOLFY_PRO';",
-        "ALTER TABLE users ADD COLUMN daily_streak INTEGER DEFAULT 4;",
+        "ALTER TABLE users ADD COLUMN nexus_coins INTEGER DEFAULT 0;",
+        "ALTER TABLE users ADD COLUMN referral_code TEXT;",
+        "ALTER TABLE users ADD COLUMN daily_streak INTEGER DEFAULT 0;",
         "ALTER TABLE users ADD COLUMN last_claim_date TEXT;",
         "ALTER TABLE users ADD COLUMN custom_title TEXT;",
         "ALTER TABLE users ADD COLUMN recovery_codes TEXT;",
-        "ALTER TABLE users ADD COLUMN bound_phone TEXT DEFAULT '+91 9876543210';",
-        "ALTER TABLE users ADD COLUMN bound_email TEXT DEFAULT 'wolfy@nexusarena.gg';",
+        "ALTER TABLE users ADD COLUMN bound_phone TEXT;",
+        "ALTER TABLE users ADD COLUMN bound_email TEXT;",
         "ALTER TABLE users ADD COLUMN authenticator_app_bound INTEGER DEFAULT 1;",
         "ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'ACTIVE';",
         "ALTER TABLE users ADD COLUMN has_claimed_referral INTEGER DEFAULT 0;",
@@ -484,7 +484,7 @@ def init_db():
                 "Live esports tournaments, elimination brackets, joined player rosters, Elo seeding, and prize escrow operations.",
                 "Tournament/Event Organizer & Players Management Manager",
                 None,
-                "NexusCoAdmin",
+                "admin",
                 "ACTIVE",
                 "Verify player check-ins, manage live brackets, assign Elo MMR seeds, resolve disputes, approve delayed starts or cancellations.",
                 now_iso,
@@ -497,7 +497,7 @@ def init_db():
                 "Esports showcase metrics, regional rankings, XP progression, daily quests, coin store, and squad referral boosts.",
                 "GAMERFLICK ESPORTS SHOWCASE / GAMERCONNECT Manager",
                 None,
-                "NexusCoAdmin",
+                "admin",
                 "ACTIVE",
                 "Monitor regional clan rankings, configure squad referral bonus multipliers, oversee daily quests and coin vouchers inventory.",
                 now_iso,
@@ -510,7 +510,7 @@ def init_db():
                 "Official breaking news, press releases, media partnerships, and platform orbital resources hub.",
                 "Resources / News and Social Media / Promotion Manager",
                 None,
-                "NexusCoAdmin",
+                "admin",
                 "ACTIVE",
                 "Draft and publish official tournament statements, manage media sponsorships, coordinate press releases & community newsletters.",
                 now_iso,
@@ -523,7 +523,7 @@ def init_db():
                 "High-octane frag highlights, community short clips, and official 4K LAN tournament photo archives.",
                 "Gallery and Clips / Shorts / Video Editor Manager",
                 None,
-                "NexusCoAdmin",
+                "admin",
                 "ACTIVE",
                 "Curate community frag video submissions, moderate clips feed, upload and publish high-res LAN championship event photos.",
                 now_iso,
@@ -542,10 +542,10 @@ def init_db():
     if cursor.fetchone()["count"] == 0:
         now_iso = datetime.now(timezone.utc).isoformat()
         default_roles = [
-            ("TOURNAMENT_ORGANIZER", "Tournament Organizer", "cyan", "Authorized to create and oversee competitive esports brackets & event seeding.", 1, 1, 1, 0, now_iso, "Wolfy"),
-            ("CHIEF_REFEREE", "Chief Match Referee", "rose", "Adjudicates match disputes, checks player screenshots, and settles bracket scores.", 1, 1, 0, 0, now_iso, "Wolfy"),
-            ("CONTENT_CREATOR", "Verified Content Partner", "purple", "Official streamer with showcase highlight publishing & verified broadcast badge.", 0, 0, 0, 0, now_iso, "Wolfy"),
-            ("VIP_AMBASSADOR", "VIP Ambassador", "amber", "Top-tier platform patron with community ambassador status and coin rewards.", 0, 0, 0, 0, now_iso, "Wolfy")
+            ("TOURNAMENT_ORGANIZER", "Tournament Organizer", "cyan", "Authorized to create and oversee competitive esports brackets & event seeding.", 1, 1, 1, 0, now_iso, "admin"),
+            ("CHIEF_REFEREE", "Chief Match Referee", "rose", "Adjudicates match disputes, checks player screenshots, and settles bracket scores.", 1, 1, 0, 0, now_iso, "admin"),
+            ("CONTENT_CREATOR", "Verified Content Partner", "purple", "Official streamer with showcase highlight publishing & verified broadcast badge.", 0, 0, 0, 0, now_iso, "admin"),
+            ("VIP_AMBASSADOR", "VIP Ambassador", "amber", "Top-tier platform patron with community ambassador status and coin rewards.", 0, 0, 0, 0, now_iso, "admin")
         ]
         cursor.executemany("""
         INSERT INTO custom_roles (
