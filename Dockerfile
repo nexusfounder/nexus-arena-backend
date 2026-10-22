@@ -19,6 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
+# Configure isolated virtual environment (eliminates root pip warnings)
+ENV VIRTUAL_ENV=/opt/venv
+RUN python -m venv $VIRTUAL_ENV
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
 # Install Python production dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
