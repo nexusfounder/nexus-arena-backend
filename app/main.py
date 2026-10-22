@@ -3181,6 +3181,14 @@ def update_user_role_route(
 # 19. MAIN ADMIN SECURITY BINDINGS & AUTHENTICATOR HUB
 # ==========================================
 
+DEFAULT_MASTER_RECOVERY_CODES = [
+    "NEXUS-RECV-9821-4412",
+    "NEXUS-RECV-7719-8802",
+    "NEXUS-RECV-3312-5591",
+    "NEXUS-RECV-4491-2284",
+    "NEXUS-RECV-6623-1189"
+]
+
 @app.get("/api/admin/security/bindings")
 def get_admin_security_bindings(admin_user: Dict[str, Any] = Depends(require_main_admin)):
     conn = get_db_connection()
