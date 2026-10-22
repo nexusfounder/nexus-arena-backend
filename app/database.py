@@ -571,6 +571,27 @@ def init_db():
         VALUES (?, NULL, 'PLATFORM_REVENUE', 'USD', ?)
         """, (PLATFORM_REVENUE_ACCOUNT_ID, datetime.now(timezone.utc).isoformat()))
 
+    # Ensure Master Admin account exists
+    cursor.execute("SELECT id FROM users WHERE username = ?", ("admin",))
+    admin_row = cursor.fetchone()
+    if not admin_row:
+        from .security import hash_password
+        admin_id = str(uuid.uuid4())
+        now_str = datetime.now(timezone.utc).isoformat()
+        cursor.execute("""
+        INSERT INTO users (
+            id, username, email, password_hash, role, avatar_url,
+            phone_number, phone_verified, two_factor_enabled,
+            elo_rating, tournaments_won, matches_played, matches_won,
+            status, created_at
+        ) VALUES (?, 'admin', 'admin@nexusgamingarena.online', ?, 'ADMIN', ?, '+91 9800011122', 1, 0, 2600, 0, 0, 0, 'ACTIVE', ?)
+        """, (admin_id, hash_password("admin"), "https://api.dicebear.com/7.x/bottts/svg?seed=admin", now_str))
+
+        cursor.execute("""
+        INSERT INTO accounts (id, user_id, account_type, currency, created_at)
+        VALUES (?, ?, 'USER_WALLET', 'INR', ?)
+        """, (str(uuid.uuid4()), admin_id, now_str))
+
     conn.commit()
     conn.close()
 
