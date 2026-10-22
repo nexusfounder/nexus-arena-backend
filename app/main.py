@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 from fastapi import FastAPI, Request, Response, WebSocket, WebSocketDisconnect, Depends, HTTPException, status, Query
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -102,6 +102,13 @@ TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+
+@app.get("/sw.js")
+def service_worker_route():
+    sw_file = BASE_DIR / "sw.js"
+    if sw_file.exists():
+        return FileResponse(sw_file, media_type="application/javascript")
+    raise HTTPException(status_code=404, detail="Service worker not found.")
 
 # ==========================================
 # 1. SECURITY HEADERS & EXCEPTION SHIELD
