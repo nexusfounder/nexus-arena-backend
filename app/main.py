@@ -103,6 +103,34 @@ TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
+@app.get("/robots.txt")
+def robots_txt_route():
+    robots_file = BASE_DIR / "robots.txt"
+    if robots_file.exists():
+        return FileResponse(robots_file, media_type="text/plain")
+    return Response(
+        content="User-agent: *\nAllow: /\nDisallow: /api/admin/\nDisallow: /admin\n\nSitemap: https://nexusgamingarena.online/sitemap.xml\n",
+        media_type="text/plain"
+    )
+
+@app.get("/sitemap.xml")
+def sitemap_xml_route():
+    sitemap_file = BASE_DIR / "sitemap.xml"
+    if sitemap_file.exists():
+        return FileResponse(sitemap_file, media_type="application/xml")
+    return Response(
+        content="""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://nexusgamingarena.online/</loc>
+    <lastmod>2026-10-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>""",
+        media_type="application/xml"
+    )
+
 @app.get("/sw.js")
 def service_worker_route():
     for candidate in [BASE_DIR / "sw.js", BASE_DIR / "static" / "sw.js"]:
