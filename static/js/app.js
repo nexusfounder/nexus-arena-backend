@@ -193,6 +193,7 @@ function startApp() {
     initRememberMeCheckboxListeners();
     initCanvasParticles();
     initHeroCountdown();
+    loadLiveTicker();
     initWebSocket();
     initFirebaseServices();
     initCurrentUser();
@@ -620,6 +621,16 @@ function setupRealtimeAnnouncements() {
     if (!firebaseDb) return;
     try {
         const announcementsRef = firebaseDb.ref("live_announcements").limitToLast(1);
+        try {
+            const tickerRef = firebaseDb.ref("live_ticker_items");
+            tickerRef.on("value", (snap) => {
+                const val = snap.val();
+                if (val && Array.isArray(val) && val.length > 0) {
+                    cachedTickerItems = val;
+                    renderLiveTicker(val);
+                }
+            });
+        } catch(tkErr) {}
         announcementsRef.on("child_added", (snapshot) => {
             const announcement = snapshot.val();
             if (!announcement || !announcement.timestamp) return;
@@ -6904,6 +6915,7 @@ function switchAdminTab(tabName, pushHistory = true) {
     else if (tabName === 'moogold') loadAdminMooGoldTab();
     else if (tabName === 'coins') loadAdminCoinsTab();
     else if (tabName === 'pulse') loadAdminPulseTab();
+    else if (tabName === 'ticker') loadAdminTickerTab();
     else if (tabName === 'tickets') loadAdminTicketsTab();
     else if (tabName === 'delegations') loadAdminDelegationsTab();
     else if (tabName === 'roles') loadAdminRolesTab();

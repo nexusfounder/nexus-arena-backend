@@ -298,3 +298,21 @@ class GoogleAuthRequest(BaseModel):
 
 
 
+
+class TickerItemCreateRequest(BaseModel):
+    title: str = Field(..., min_length=2, max_length=64)
+    message: str = Field(..., min_length=3, max_length=256)
+    tag_color: Optional[str] = "cyan"
+    icon: Optional[str] = "fa-bolt"
+    link_url: Optional[str] = None
+    is_active: Optional[bool] = True
+    sort_order: Optional[int] = 0
+
+class TickerItemUpdateRequest(BaseModel):
+    title: Optional[str] = None
+    message: Optional[str] = None
+    tag_color: Optional[str] = None
+    icon: Optional[str] = None
+    link_url: Optional[str] = None
+    is_active: Optional[bool] = None
+    sort_order: Optional[int] = None

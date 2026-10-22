@@ -337,6 +337,22 @@ def init_db():
     );
     """)
 
+    # 17. Live Marquee Ticker Messages Table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS live_ticker (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        tag_color TEXT DEFAULT 'cyan',
+        icon TEXT DEFAULT 'fa-bolt',
+        link_url TEXT,
+        is_active INTEGER DEFAULT 1,
+        sort_order INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+    );
+    """)
+
     # Safe Schema Migrations for GamerFlick, Dynamic Games, and Tournament Lifecycle
     migrations = [
         "ALTER TABLE users ADD COLUMN nexus_coins INTEGER DEFAULT 0;",
@@ -570,6 +586,23 @@ def init_db():
         INSERT INTO accounts (id, user_id, account_type, currency, created_at)
         VALUES (?, NULL, 'PLATFORM_REVENUE', 'USD', ?)
         """, (PLATFORM_REVENUE_ACCOUNT_ID, datetime.now(timezone.utc).isoformat()))
+
+    # Seed Default Live Ticker Announcements if Empty
+    cursor.execute("SELECT COUNT(*) as count FROM live_ticker")
+    if cursor.fetchone()["count"] == 0:
+        now_iso = datetime.now(timezone.utc).isoformat()
+        default_ticker = [
+            (str(uuid.uuid4()), "SEASON 1 LAUNCH", "NEXUS GAMING ARENA IS OFFICIALLY LIVE • REGISTRATIONS OPEN", "cyan", "fa-bolt", "#tournaments", 1, 1, now_iso, now_iso),
+            (str(uuid.uuid4()), "GAMERFLICK COIN VAULT", "CLAIM DAILY +50 NEXUS COINS & UNLOCK FREE PASSES", "amber", "fa-coins", None, 1, 2, now_iso, now_iso),
+            (str(uuid.uuid4()), "PRIZE ESCROW", "TOURNAMENT PRIZE ESCROW 100% SECURE & AUDITED", "green", "fa-shield-halved", None, 1, 3, now_iso, now_iso),
+            (str(uuid.uuid4()), "COMPETITIVE ARENA", "OFFICIAL ESPORTS TOURNAMENTS & RANKED LEADERBOARDS LIVE", "violet", "fa-trophy", "#tournaments", 1, 4, now_iso, now_iso)
+        ]
+        cursor.executemany("""
+        INSERT INTO live_ticker (
+            id, title, message, tag_color, icon, link_url, is_active, sort_order, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, default_ticker)
+        conn.commit()
 
     # Ensure Master Admin account exists
     cursor.execute("SELECT id FROM users WHERE username = ?", ("admin",))

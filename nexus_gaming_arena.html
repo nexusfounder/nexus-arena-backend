@@ -418,7 +418,7 @@
                     <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 animate-ping"></span> LIVE TICKER
                 </span>
                 <div class="marquee-container flex-1 min-w-0 overflow-hidden">
-                    <div class="marquee-content flex items-center gap-8 text-gray-300 uppercase font-rajdhani font-bold tracking-wider text-xs">
+                    <div id="live-marquee-track-1" class="marquee-content flex items-center gap-8 text-gray-300 uppercase font-rajdhani font-bold tracking-wider text-xs">
                         <span class="flex items-center gap-2"><span class="live-indicator-dot"></span> <span class="text-cyan-400">SEASON 1 LAUNCH:</span> NEXUS GAMING ARENA IS OFFICIALLY LIVE &bull; REGISTRATIONS OPEN</span>
                         <span class="flex items-center gap-2"><i class="fa-solid fa-coins text-amber-400 coin-shimmer"></i> <span class="text-amber-400">GAMERFLICK COIN VAULT:</span> CLAIM DAILY +50 NEXUS COINS & UNLOCK FREE PASSES</span>
                         <span class="flex items-center gap-2"><i class="fa-solid fa-trophy text-amber-400"></i> TOURNAMENT PRIZE ESCROW 100% RBI COMPLIANT</span>
@@ -426,7 +426,7 @@
                         <span class="flex items-center gap-2"><i class="fa-solid fa-users text-violet-400"></i> OFFICIAL COMPETITIVE ARENA LAUNCH</span>
                         <span class="flex items-center gap-2"><i class="fa-solid fa-bolt text-pink-400"></i> ZERO-CRASH & ANTI-SMURF PROTECTION ACTIVE</span>
                     </div>
-                    <div class="marquee-content flex items-center gap-8 text-gray-300 uppercase font-rajdhani font-bold tracking-wider text-xs" aria-hidden="true">
+                    <div id="live-marquee-track-2" class="marquee-content flex items-center gap-8 text-gray-300 uppercase font-rajdhani font-bold tracking-wider text-xs" aria-hidden="true">
                         <span class="flex items-center gap-2"><span class="live-indicator-dot"></span> <span class="text-cyan-400">SEASON 1 LAUNCH:</span> NEXUS GAMING ARENA IS OFFICIALLY LIVE &bull; REGISTRATIONS OPEN</span>
                         <span class="flex items-center gap-2"><i class="fa-solid fa-coins text-amber-400 coin-shimmer"></i> <span class="text-amber-400">GAMERFLICK COIN VAULT:</span> CLAIM DAILY +50 NEXUS COINS & UNLOCK FREE PASSES</span>
                         <span class="flex items-center gap-2"><i class="fa-solid fa-trophy text-amber-400"></i> TOURNAMENT PRIZE ESCROW 100% RBI COMPLIANT</span>
@@ -2523,6 +2523,9 @@
                     </button>
                     <button onclick="switchAdminTab('pulse')" id="admin-btn-pulse" class="admin-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap bg-cyber-dark text-gray-400 border border-cyber-border hover:text-white transition-all flex items-center gap-1.5">
                         <i class="fa-solid fa-heart-pulse text-red-400"></i> Live Pulse
+                    </button>
+                    <button onclick="switchAdminTab('ticker')" id="admin-btn-ticker" class="admin-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap bg-cyber-dark text-gray-400 border border-cyber-border hover:text-white transition-all flex items-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-bullhorn text-red-400"></i> Live Ticker &amp; Broadcasts
                     </button>
                     <button onclick="switchAdminTab('tickets')" id="admin-btn-tickets" class="admin-tab-btn px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap bg-cyber-dark text-gray-400 border border-cyber-border hover:text-white transition-all flex items-center gap-1.5">
                         <i class="fa-solid fa-headset text-violet-400"></i> Grievances Desk <span id="admin-open-tickets-badge" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-red-500 text-white font-extrabold">0</span>
@@ -6747,6 +6750,88 @@
                     <button type="submit" id="btn-user-save-cred" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 hover:brightness-110 text-black font-rajdhani font-black text-xs uppercase tracking-wider shadow glow-cyan flex items-center gap-1.5 cursor-pointer">
                         <i class="fa-solid fa-floppy-disk"></i>
                         <span>Save Changes</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ================= EDIT TICKER ITEM MODAL ================= -->
+    <div id="modal-admin-edit-ticker" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200" onclick="if(event.target === this) closeModal('modal-admin-edit-ticker')">
+        <div class="bg-cyber-dark/95 border border-cyan-500/50 rounded-3xl max-w-lg w-full p-6 sm:p-7 space-y-4 shadow-2xl relative glow-cyan tactical-cut">
+            <div class="flex items-center justify-between border-b border-cyber-border/70 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/40">
+                        <i class="fa-solid fa-pen-to-square text-sm"></i>
+                    </span>
+                    <div>
+                        <h4 class="font-orbitron font-extrabold text-white text-base">EDIT TICKER BROADCAST</h4>
+                        <p class="text-[10px] text-gray-400 font-mono">LIVE MARQUEE BROADCAST CONFIGURATOR</p>
+                    </div>
+                </div>
+                <button onclick="closeModal('modal-admin-edit-ticker')" class="w-8 h-8 rounded-xl bg-cyber-card border border-cyber-border text-gray-400 hover:text-white flex items-center justify-center transition-all cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <form onsubmit="handleSaveEditedTicker(event)" class="space-y-4">
+                <input type="hidden" id="edit-ticker-id">
+
+                <div>
+                    <label class="text-[11px] font-bold text-gray-300 block mb-1">Headline Tag</label>
+                    <input type="text" id="edit-ticker-title" required maxlength="64" placeholder="e.g. SEASON 1 FINALS" class="w-full bg-cyber-card border border-cyber-border rounded-xl px-3 py-2 text-xs text-white uppercase focus:outline-none focus:border-cyan-400 font-bold tracking-wider">
+                </div>
+
+                <div>
+                    <label class="text-[11px] font-bold text-gray-300 block mb-1">Broadcast Message</label>
+                    <textarea id="edit-ticker-message" required maxlength="256" rows="3" placeholder="e.g. Registrations closing at 8 PM IST. Join your squad now!" class="w-full bg-cyber-card border border-cyber-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400 font-rajdhani text-sm"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-300 block mb-1">Tag Color Theme</label>
+                        <select id="edit-ticker-color" class="w-full bg-cyber-card border border-cyber-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400">
+                            <option value="cyan">🎯 Cyan (Esports)</option>
+                            <option value="amber">🏆 Amber (Prizes &amp; Coins)</option>
+                            <option value="green">🟢 Green (Live / Verified)</option>
+                            <option value="red">🚨 Red (Urgent Alert)</option>
+                            <option value="violet">⚡ Violet (Special Event)</option>
+                            <option value="pink">💖 Pink (Hype)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-300 block mb-1">Icon Style</label>
+                        <select id="edit-ticker-icon" class="w-full bg-cyber-card border border-cyber-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400">
+                            <option value="fa-bolt">⚡ Bolt</option>
+                            <option value="fa-trophy">🏆 Trophy</option>
+                            <option value="fa-coins">🪙 Coins</option>
+                            <option value="fa-bullhorn">📢 Bullhorn</option>
+                            <option value="fa-shield-halved">🛡️ Shield</option>
+                            <option value="fa-fire">🔥 Fire</option>
+                            <option value="fa-triangle-exclamation">⚠️ Warning</option>
+                            <option value="fa-gamepad">🎮 Gamepad</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 items-center">
+                    <div>
+                        <label class="text-[11px] font-bold text-gray-300 block mb-1">Target Link (Optional)</label>
+                        <input type="text" id="edit-ticker-link" placeholder="#tournaments" class="w-full bg-cyber-card border border-cyber-border rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-cyan-400">
+                    </div>
+                    <div class="pt-4">
+                        <label class="flex items-center gap-2 cursor-pointer text-xs text-gray-300">
+                            <input type="checkbox" id="edit-ticker-active" class="w-4 h-4 rounded text-cyan-400 border-cyber-border focus:ring-0 bg-cyber-card">
+                            <span class="font-bold">Active in Marquee</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-3 border-t border-cyber-border/70 flex gap-2 justify-end">
+                    <button type="button" onclick="closeModal('modal-admin-edit-ticker')" class="px-4 py-2 rounded-xl bg-cyber-card border border-cyber-border text-gray-400 hover:text-white font-bold text-xs transition-all">Cancel</button>
+                    <button type="submit" class="px-6 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 text-black font-extrabold text-xs hover:brightness-110 transition-all glow-cyan flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Save &amp; Broadcast Live
                     </button>
                 </div>
             </form>

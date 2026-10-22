@@ -54,7 +54,7 @@ from .models import (
     ResetPasswordRequest, AdminSecurityBindingUpdateRequest, LinkGuestRequest,
     AdminCredentialsUpdateRequest,
     StripeChargeTokenRequest, BuyCoinsRequest,
-    RBIPaymentOrderCreateRequest, RBIPaymentVerifyRequest, GoogleAuthRequest
+    RBIPaymentOrderCreateRequest, RBIPaymentVerifyRequest, GoogleAuthRequest, TickerItemCreateRequest, TickerItemUpdateRequest
 )
 from .rbi_compliance import (
     DATA_LOCALIZATION_REGION, MANDATORY_DISCLOSURES,
@@ -557,7 +557,7 @@ def link_guest_user(req: LinkGuestRequest, user: Dict[str, Any] = Depends(get_cu
         conn.close()
 
 @app.post("/api/auth/google")
-def google_auth_login(req: GoogleAuthRequest, response: Response):
+def google_auth_login(req: GoogleAuthRequest, TickerItemCreateRequest, TickerItemUpdateRequest, response: Response):
     email = req.email.strip().lower()
     if not email:
         raise HTTPException(status_code=400, detail="Google email is required.")
@@ -3779,4 +3779,161 @@ if __name__ == "__main__":
     from .database import init_db
     init_db()
     uvicorn.run("app.main:app", host=HOST, port=PORT, reload=False)
+
+
+# ==========================================
+# LIVE MARQUEE TICKER MANAGEMENT APIS
+# ==========================================
+
+@app.get("/api/ticker")
+def get_public_ticker():
+    """Returns active live ticker announcements for public marquee display."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT * FROM live_ticker
+        WHERE is_active = 1
+        ORDER BY sort_order ASC, created_at ASC
+        """)
+        items = [dict(r) for r in cursor.fetchall()]
+        return {"status": "SUCCESS", "items": items}
+    finally:
+        conn.close()
+
+@app.get("/api/admin/ticker")
+def get_admin_ticker(user: Dict[str, Any] = Depends(require_admin_or_coadmin)):
+    """Returns all ticker items (active and inactive) for admin management."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT * FROM live_ticker
+        ORDER BY sort_order ASC, created_at ASC
+        """)
+        items = [dict(r) for r in cursor.fetchall()]
+        return {"status": "SUCCESS", "items": items}
+    finally:
+        conn.close()
+
+@app.post("/api/admin/ticker")
+def create_ticker_item(req: TickerItemCreateRequest, user: Dict[str, Any] = Depends(require_admin_or_coadmin)):
+    """Creates a new live ticker announcement."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        item_id = str(uuid.uuid4())
+        now_iso = datetime.now(timezone.utc).isoformat()
+        
+        # Calculate next sort order if 0
+        if req.sort_order == 0:
+            cursor.execute("SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM live_ticker")
+            req.sort_order = cursor.fetchone()["next_order"]
+
+        cursor.execute("""
+        INSERT INTO live_ticker (
+            id, title, message, tag_color, icon, link_url, is_active, sort_order, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            item_id, req.title.strip().upper(), req.message.strip(),
+            req.tag_color or "cyan", req.icon or "fa-bolt",
+            req.link_url.strip() if req.link_url else None,
+            1 if req.is_active else 0,
+            req.sort_order, now_iso, now_iso
+        ))
+        conn.commit()
+
+        cursor.execute("SELECT * FROM live_ticker WHERE id = ?", (item_id,))
+        created_item = dict(cursor.fetchone())
+        return {"status": "SUCCESS", "item": created_item, "message": "Ticker item published live!"}
+    finally:
+        conn.close()
+
+@app.put("/api/admin/ticker/{item_id}")
+def update_ticker_item(item_id: str, req: TickerItemUpdateRequest, user: Dict[str, Any] = Depends(require_admin_or_coadmin)):
+    """Updates an existing live ticker announcement."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM live_ticker WHERE id = ?", (item_id,))
+        existing = cursor.fetchone()
+        if not existing:
+            raise HTTPException(status_code=404, detail="Ticker item not found.")
+
+        updates = []
+        params = []
+        if req.title is not None:
+            updates.append("title = ?")
+            params.append(req.title.strip().upper())
+        if req.message is not None:
+            updates.append("message = ?")
+            params.append(req.message.strip())
+        if req.tag_color is not None:
+            updates.append("tag_color = ?")
+            params.append(req.tag_color)
+        if req.icon is not None:
+            updates.append("icon = ?")
+            params.append(req.icon)
+        if req.link_url is not None:
+            updates.append("link_url = ?")
+            params.append(req.link_url.strip() if req.link_url else None)
+        if req.is_active is not None:
+            updates.append("is_active = ?")
+            params.append(1 if req.is_active else 0)
+        if req.sort_order is not None:
+            updates.append("sort_order = ?")
+            params.append(req.sort_order)
+
+        now_iso = datetime.now(timezone.utc).isoformat()
+        updates.append("updated_at = ?")
+        params.append(now_iso)
+
+        params.append(item_id)
+        cursor.execute(f"UPDATE live_ticker SET {', '.join(updates)} WHERE id = ?", params)
+        conn.commit()
+
+        cursor.execute("SELECT * FROM live_ticker WHERE id = ?", (item_id,))
+        updated_item = dict(cursor.fetchone())
+        return {"status": "SUCCESS", "item": updated_item, "message": "Ticker item updated successfully!"}
+    finally:
+        conn.close()
+
+@app.delete("/api/admin/ticker/{item_id}")
+def delete_ticker_item(item_id: str, user: Dict[str, Any] = Depends(require_admin_or_coadmin)):
+    """Deletes a ticker announcement permanently."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM live_ticker WHERE id = ?", (item_id,))
+        conn.commit()
+        return {"status": "SUCCESS", "message": "Ticker item deleted."}
+    finally:
+        conn.close()
+
+@app.post("/api/admin/ticker/reset-defaults")
+def reset_ticker_defaults(user: Dict[str, Any] = Depends(require_admin_or_coadmin)):
+    """Restores default Season 1 ticker announcements."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM live_ticker")
+        now_iso = datetime.now(timezone.utc).isoformat()
+        default_ticker = [
+            (str(uuid.uuid4()), "SEASON 1 LAUNCH", "NEXUS GAMING ARENA IS OFFICIALLY LIVE • REGISTRATIONS OPEN", "cyan", "fa-bolt", "#tournaments", 1, 1, now_iso, now_iso),
+            (str(uuid.uuid4()), "GAMERFLICK COIN VAULT", "CLAIM DAILY +50 NEXUS COINS & UNLOCK FREE PASSES", "amber", "fa-coins", None, 1, 2, now_iso, now_iso),
+            (str(uuid.uuid4()), "PRIZE ESCROW", "TOURNAMENT PRIZE ESCROW 100% SECURE & AUDITED", "green", "fa-shield-halved", None, 1, 3, now_iso, now_iso),
+            (str(uuid.uuid4()), "COMPETITIVE ARENA", "OFFICIAL ESPORTS TOURNAMENTS & RANKED LEADERBOARDS LIVE", "violet", "fa-trophy", "#tournaments", 1, 4, now_iso, now_iso)
+        ]
+        cursor.executemany("""
+        INSERT INTO live_ticker (
+            id, title, message, tag_color, icon, link_url, is_active, sort_order, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, default_ticker)
+        conn.commit()
+
+        cursor.execute("SELECT * FROM live_ticker ORDER BY sort_order ASC")
+        items = [dict(r) for r in cursor.fetchall()]
+        return {"status": "SUCCESS", "items": items, "message": "Default Season 1 ticker restored!"}
+    finally:
+        conn.close()
 
