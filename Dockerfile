@@ -32,7 +32,7 @@ COPY app/ ./app/
 COPY templates/ ./templates/
 COPY static/ ./static/
 COPY nexus_gaming_arena.html ./
-COPY data/ ./data/
+RUN mkdir -p data
 
 # Ensure directories have proper permissions
 RUN chown -R nexususer:nexusgroup $APP_HOME
