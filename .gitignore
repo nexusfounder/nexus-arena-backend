@@ -94,6 +94,8 @@ wheels/
 *.db
 *.sqlite3
 data/*.db
+data/.nexus_secret
+*.secret
 
 # OS files
 .DS_Store

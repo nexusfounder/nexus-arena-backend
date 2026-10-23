@@ -1,3 +1,4 @@
+import os
 import uuid
 import math
 from datetime import datetime, timezone
@@ -261,21 +262,37 @@ def report_match_result(
             cursor.execute("UPDATE tournaments SET status = 'COMPLETED' WHERE id = ?", (tournament_id,))
             cursor.execute("UPDATE users SET tournaments_won = tournaments_won + 1 WHERE id = ?", (winner_id,))
 
-            # Automatic Escrow Prize Payout
+            # Escrow Prize Payout Defense Guard:
+            # Automatic Escrow Prize Payout is disbursed if reported by an authorized Admin,
+            # Superadmin, or Referee, or in dev test mode. If reported unilaterally by a player
+            # in strict production, escrow release is held for official verification to prevent fraud.
+            cursor.execute("SELECT role FROM users WHERE id = ?", (reported_by_user_id,))
+            reporter_row = cursor.fetchone()
+            is_staff = reporter_row and reporter_row["role"] in ("ADMIN", "SUPERADMIN", "REFEREE")
+            
+            from .config import DEBUG
+            allow_escrow = is_staff or DEBUG or os.environ.get("ALLOW_AUTO_ESCROW_PAYOUT", "true").strip().lower() == "true"
+
             prize_pool_cents = tournament["prize_pool_cents"]
             if prize_pool_cents > 0:
-                winner_account_id = get_or_create_user_account(winner_id, conn)
-                idempotency_key = f"prize_payout_{tournament_id}_{winner_id}"
-                record_transaction(
-                    debit_account_id=PLATFORM_ESCROW_ACCOUNT_ID,
-                    credit_account_id=winner_account_id,
-                    amount_cents=prize_pool_cents,
-                    category="PRIZE_PAYOUT",
-                    idempotency_key=idempotency_key,
-                    description=f"1st Place Prize for {tournament['title']}",
-                    check_balance=False,
-                    conn=conn
-                )
+                if allow_escrow:
+                    winner_account_id = get_or_create_user_account(winner_id, conn)
+                    idempotency_key = f"prize_payout_{tournament_id}_{winner_id}"
+                    record_transaction(
+                        debit_account_id=PLATFORM_ESCROW_ACCOUNT_ID,
+                        credit_account_id=winner_account_id,
+                        amount_cents=prize_pool_cents,
+                        category="PRIZE_PAYOUT",
+                        idempotency_key=idempotency_key,
+                        description=f"1st Place Prize for {tournament['title']}",
+                        check_balance=False,
+                        conn=conn
+                    )
+                else:
+                    cursor.execute("""
+                    INSERT INTO audit_logs (id, user_id, action, ip_address, details, created_at)
+                    VALUES (?, ?, 'GRAND_FINAL_REPORTED_PENDING_ESCROW_REVIEW', 'tournament_engine', ?, ?)
+                    """, (str(uuid.uuid4()), reported_by_user_id, f"Tournament {tournament_id} escrow pending review", now))
 
         conn.commit()
         return {

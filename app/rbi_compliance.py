@@ -136,8 +136,8 @@ def tokenize_card_coft(card_number: str, card_expiry: str, card_brand: str = "Ru
 # =============================================================================
 # 4. RBI-COMPLIANT ORDER CREATION & SIGNATURE VERIFICATION
 # =============================================================================
-RAZORPAY_TEST_KEY_ID = "rzp_test_NEXUSARENA2026"
-RAZORPAY_TEST_KEY_SECRET = "secret_rbi_compliant_pa_key_998877"
+RAZORPAY_TEST_KEY_ID = os.environ.get("RAZORPAY_KEY_ID", "rzp_test_NEXUSARENA2026")
+RAZORPAY_TEST_KEY_SECRET = os.environ.get("RAZORPAY_KEY_SECRET", "secret_rbi_compliant_pa_key_998877")
 
 def create_rbi_payment_order(
     amount_inr: float,
@@ -182,7 +182,7 @@ def verify_rbi_payment_signature(
     order_id: str,
     payment_id: str,
     signature: str,
-    secret: str = RAZORPAY_TEST_KEY_SECRET
+    secret: Optional[str] = None
 ) -> bool:
     """
     Verifies the HMAC SHA256 signature returned by the RBI-authorized Payment Aggregator.
@@ -196,8 +196,9 @@ def verify_rbi_payment_signature(
     if allow_sandbox and (signature.startswith("sim_sig_") or signature.startswith("sandbox_")):
         return True
     
+    effective_secret = secret or os.environ.get("RAZORPAY_KEY_SECRET") or RAZORPAY_TEST_KEY_SECRET
     data = f"{order_id}|{payment_id}".encode('utf-8')
-    expected_sig = hmac.new(secret.encode('utf-8'), data, hashlib.sha256).hexdigest()
+    expected_sig = hmac.new(effective_secret.encode('utf-8'), data, hashlib.sha256).hexdigest()
     return hmac.compare_digest(expected_sig, signature)
 
 # =============================================================================

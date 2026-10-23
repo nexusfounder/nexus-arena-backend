@@ -423,6 +423,28 @@ def init_db():
     );
     """)
 
+    # 19. RBI-Compliant Gateway Payment Orders Table (Prevents Payment Forgery & Double-Spending)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS payment_orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id TEXT UNIQUE NOT NULL,
+        user_id TEXT NOT NULL,
+        amount REAL NOT NULL,
+        amount_cents INTEGER NOT NULL,
+        currency TEXT DEFAULT 'INR',
+        purpose TEXT NOT NULL,
+        target_id TEXT,
+        payment_method TEXT DEFAULT 'UPI',
+        status TEXT DEFAULT 'CREATED',
+        payment_id TEXT,
+        signature TEXT,
+        created_at TEXT NOT NULL,
+        paid_at TEXT
+    );
+    """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_orders_order_id ON payment_orders(order_id);")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_payment_orders_user_id ON payment_orders(user_id);")
+
     # Part 1 Migration: Ensure isolated Table 2 (2FA secrets) and Table 3 (financial profiles) exist
     now_iso = datetime.now(timezone.utc).isoformat()
     cursor.execute("SELECT id, username, two_factor_secret, two_factor_enabled, recovery_codes FROM users")

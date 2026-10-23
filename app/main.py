@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config import BASE_DIR, SECRET_KEY, PLATFORM_ESCROW_ACCOUNT_ID, PLATFORM_REVENUE_ACCOUNT_ID, SUPPORTED_GAMES
+from .config import BASE_DIR, SECRET_KEY, PLATFORM_ESCROW_ACCOUNT_ID, PLATFORM_REVENUE_ACCOUNT_ID, SUPPORTED_GAMES, DEBUG
 from .database import get_db_connection, init_db
 from .security import (
     hash_password, verify_password, create_jwt_token, verify_jwt_token,
@@ -253,17 +253,6 @@ def get_current_user(request: Request) -> Dict[str, Any]:
 
     payload = verify_jwt_token(token)
     if not payload:
-        # Fallback check for emergency admin or persistent client session tokens
-        if token.startswith("secure_token_") or token.startswith("persistent_") or token.startswith("admin_"):
-            conn = get_db_connection()
-            try:
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM users WHERE LOWER(username) = 'admin' OR role IN ('ADMIN', 'SUPERADMIN') LIMIT 1")
-                admin_user = cursor.fetchone()
-                if admin_user:
-                    return dict(admin_user)
-            finally:
-                conn.close()
         raise HTTPException(status_code=401, detail="Invalid or expired session token.")
 
     conn = get_db_connection()
@@ -1049,11 +1038,14 @@ async def send_otp(req: SendOTPRequest, request: Request):
         from .sms_gateway import send_sms_otp
         dispatch_res = await send_sms_otp(req.identifier, code)
 
+        # In production, never return the plaintext verification code in the HTTP response.
+        # Only permit in local DEBUG environment with explicit ALLOW_OTP_DEMO_LEAK flag.
+        is_dev_sandbox = DEBUG and os.environ.get("ALLOW_OTP_DEMO_LEAK", "false").strip().lower() == "true"
         return {
             "status": "SENT",
             "message": f"Verification code dispatched to {req.identifier}.",
             "provider": dispatch_res.get("provider", "GATEWAY"),
-            "demo_code": code if dispatch_res.get("is_sandbox") else None
+            "demo_code": code if (is_dev_sandbox and dispatch_res.get("is_sandbox")) else None
         }
     finally:
         conn.close()
@@ -1674,15 +1666,35 @@ def deposit_funds(req: DepositRequest, user: Dict[str, Any] = Depends(get_curren
         detail="Direct unverified deposits are disabled. Please use the secure RBI payment gateway (/api/payments/create-order and /api/payments/verify)."
     )
 
+OFFICIAL_COIN_PACKAGES = {
+    "pack_starter": {"coins": 500, "price_inr": 49.0},
+    "pack_elite": {"coins": 1500, "price_inr": 119.0},
+    "pack_champion": {"coins": 4000, "price_inr": 299.0},
+    "pack_legend": {"coins": 12000, "price_inr": 799.0},
+    "pack_ultra": {"coins": 100000, "price_inr": 99999.0},
+}
+
 @app.post("/api/wallet/buy-coins")
 def buy_coins(req: BuyCoinsRequest, user: Dict[str, Any] = Depends(get_current_user)):
     """
     Buys Nexus Coins package using verified cash wallet balance.
-    Credits double-entry ledger with mandatory balance verification.
+    Strictly validates package pricing against server-side canonical tiers to prevent client manipulation.
     """
-    amount_cents = int(round(req.amount * 100))
-    if amount_cents < 100:
-        raise HTTPException(status_code=400, detail="Invalid package amount.")
+    pkg = OFFICIAL_COIN_PACKAGES.get(req.package_id)
+    if pkg:
+        canonical_coins = pkg["coins"]
+        canonical_amount_cents = int(round(pkg["price_inr"] * 100))
+    else:
+        # Fallback check if package_id omitted but amount/coins match an official package
+        matched = None
+        for p in OFFICIAL_COIN_PACKAGES.values():
+            if round(p["price_inr"], 2) == round(req.amount, 2) and p["coins"] == req.coins:
+                matched = p
+                break
+        if not matched:
+            raise HTTPException(status_code=400, detail="Invalid coin package or tampered price.")
+        canonical_coins = matched["coins"]
+        canonical_amount_cents = int(round(matched["price_inr"] * 100))
 
     conn = get_db_connection()
     try:
@@ -1693,10 +1705,10 @@ def buy_coins(req: BuyCoinsRequest, user: Dict[str, Any] = Depends(get_current_u
             tx_result = record_transaction(
                 debit_account_id=user_account_id,
                 credit_account_id=PLATFORM_REVENUE_ACCOUNT_ID,
-                amount_cents=amount_cents,
+                amount_cents=canonical_amount_cents,
                 category="COINS_PURCHASE",
                 idempotency_key=req.idempotency_key,
-                description=f"Purchased {req.coins:,} Coins via Cash Wallet ({req.package_id})",
+                description=f"Purchased {canonical_coins:,} Coins via Cash Wallet ({req.package_id or 'official'})",
                 check_balance=True,
                 conn=conn
             )
@@ -1706,15 +1718,15 @@ def buy_coins(req: BuyCoinsRequest, user: Dict[str, Any] = Depends(get_current_u
                 detail=f"Insufficient funds in Cash Wallet to purchase this pack. Please top up your Cash Wallet first."
             )
 
-        cursor.execute("UPDATE users SET nexus_coins = COALESCE(nexus_coins, 2450) + ? WHERE id = ?", (req.coins, user["id"]))
+        cursor.execute("UPDATE users SET nexus_coins = COALESCE(nexus_coins, 2450) + ? WHERE id = ?", (canonical_coins, user["id"]))
         cursor.execute("SELECT nexus_coins FROM users WHERE id = ?", (user["id"],))
         row = cursor.fetchone()
-        new_coins = row["nexus_coins"] if row else (2450 + req.coins)
+        new_coins = row["nexus_coins"] if row else (2450 + canonical_coins)
         conn.commit()
 
         return {
             "status": "SUCCESS",
-            "message": f"Successfully purchased {req.coins:,} Nexus Coins via {req.payment_method}!",
+            "message": f"Successfully purchased {canonical_coins:,} Nexus Coins via {req.payment_method}!",
             "new_coins": new_coins,
             "transaction": tx_result
         }
@@ -1987,6 +1999,18 @@ def create_payment_order(
         }
     )
 
+    # Persist official payment order in database to prevent arbitrary client amount claims
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO payment_orders (order_id, user_id, amount, amount_cents, currency, purpose, target_id, payment_method, status, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'CREATED', ?)
+        """, (order["order_id"], str(user["id"]), order["amount"], order["amount_cents"], order["currency"], req.purpose, req.target_id, req.payment_method, order["created_at"]))
+        conn.commit()
+    finally:
+        conn.close()
+
     return {
         "status": "SUCCESS",
         "order": order,
@@ -2004,25 +2028,48 @@ async def verify_payment_order(
 ):
     """
     Verifies the cryptographic HMAC SHA256 payment signature from the RBI Payment Aggregator.
+    Validates strictly against the server-persisted payment order to prevent client amount forgery.
     Enforces Card-on-File Tokenization (CoFT) if card was used.
     Atomically updates the double-entry ledger within ap-south-1 Mumbai jurisdiction.
     """
-    # 1. Signature Verification
-    if not verify_rbi_payment_signature(req.order_id, req.payment_id, req.signature):
-        record_certin_anomaly(
-            incident_type="PAYMENT_SIGNATURE_VERIFICATION_FAILURE",
-            source_ip="gateway_callback",
-            details=f"Invalid signature for order {req.order_id} and payment {req.payment_id}"
-        )
-        raise HTTPException(status_code=400, detail="Payment signature verification failed.")
-
     conn = get_db_connection()
     try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM payment_orders WHERE order_id = ?", (req.order_id,))
+        stored_order = cursor.fetchone()
+
+        if not stored_order:
+            raise HTTPException(status_code=400, detail="Payment order not found.")
+
+        if str(stored_order["user_id"]) != str(user["id"]):
+            record_certin_anomaly(
+                incident_type="UNAUTHORIZED_PAYMENT_CLAIM",
+                source_ip="gateway_callback",
+                details=f"User {user['id']} attempted to claim order {req.order_id} belonging to user {stored_order['user_id']}"
+            )
+            raise HTTPException(status_code=403, detail="Unauthorized payment order claim.")
+
+        # 1. Signature Verification
+        if not verify_rbi_payment_signature(req.order_id, req.payment_id, req.signature):
+            record_certin_anomaly(
+                incident_type="PAYMENT_SIGNATURE_VERIFICATION_FAILURE",
+                source_ip="gateway_callback",
+                details=f"Invalid signature for order {req.order_id} and payment {req.payment_id}"
+            )
+            raise HTTPException(status_code=400, detail="Payment signature verification failed.")
+
+        if stored_order["status"] == "PAID":
+            raise HTTPException(status_code=400, detail="Payment order has already been processed.")
+
+        # Server-enforced amounts and purpose (ignores any tampered client req.amount)
+        amount_cents = stored_order["amount_cents"]
+        verified_amount_inr = stored_order["amount"]
+        verified_purpose = stored_order["purpose"]
+        target_id = stored_order["target_id"]
+
         user_account_id = get_or_create_user_account(user["id"], conn)
-        amount_cents = int(round(req.amount * 100))
         idempotency_key = f"rbi_pay_{req.payment_id}"
         now_iso = datetime.now(timezone.utc).isoformat()
-        cursor = conn.cursor()
 
         # Handle CoFT Tokenization metadata if paid via card
         coft_details = None
@@ -2033,8 +2080,8 @@ async def verify_payment_order(
                 card_brand=req.card_brand or "RuPay"
             )
 
-        # 2. Process based on payment purpose
-        if req.purpose == "WALLET_TOPUP":
+        # 2. Process based on verified payment purpose
+        if verified_purpose == "WALLET_TOPUP":
             tx_result = record_transaction(
                 debit_account_id=PLATFORM_ESCROW_ACCOUNT_ID,
                 credit_account_id=user_account_id,
@@ -2045,30 +2092,35 @@ async def verify_payment_order(
                 check_balance=False,
                 conn=conn
             )
+            cursor.execute("""
+            UPDATE payment_orders 
+            SET status = 'PAID', payment_id = ?, signature = ?, paid_at = ?
+            WHERE order_id = ?
+            """, (req.payment_id, req.signature, now_iso, req.order_id))
             conn.commit()
             new_balance = get_account_balance_cents(user_account_id, conn) / 100.0
 
             return {
                 "status": "SUCCESS",
-                "message": f"Successfully credited ₹{req.amount:.2f} via {req.payment_method}!",
+                "message": f"Successfully credited ₹{verified_amount_inr:.2f} via {req.payment_method}!",
                 "new_balance": new_balance,
                 "coft_token": coft_details["network_token"] if coft_details else None,
                 "data_localization": DATA_LOCALIZATION_REGION,
                 "transaction": tx_result
             }
 
-        elif req.purpose == "COIN_PURCHASE":
+        elif verified_purpose == "COIN_PURCHASE":
             coins_awarded = 500
-            if req.target_id == "pack_starter" or req.amount == 49:
+            if target_id == "pack_starter" or verified_amount_inr == 49:
                 coins_awarded = 500
-            elif req.target_id == "pack_elite" or req.amount == 119:
+            elif target_id == "pack_elite" or verified_amount_inr == 119:
                 coins_awarded = 1500
-            elif req.target_id == "pack_champion" or req.amount == 299:
+            elif target_id == "pack_champion" or verified_amount_inr == 299:
                 coins_awarded = 4000
-            elif req.target_id == "pack_legend" or req.amount == 799:
+            elif target_id == "pack_legend" or verified_amount_inr == 799:
                 coins_awarded = 12000
             else:
-                coins_awarded = int(req.amount * 10)
+                coins_awarded = int(verified_amount_inr * 10)
 
             tx_result = record_transaction(
                 debit_account_id=user_account_id,
@@ -2084,6 +2136,12 @@ async def verify_payment_order(
             cursor.execute("UPDATE users SET nexus_coins = COALESCE(nexus_coins, 2450) + ? WHERE id = ?", (coins_awarded, user["id"]))
             cursor.execute("SELECT nexus_coins FROM users WHERE id = ?", (user["id"],))
             new_coins = cursor.fetchone()["nexus_coins"]
+
+            cursor.execute("""
+            UPDATE payment_orders 
+            SET status = 'PAID', payment_id = ?, signature = ?, paid_at = ?
+            WHERE order_id = ?
+            """, (req.payment_id, req.signature, now_iso, req.order_id))
             conn.commit()
 
             return {
@@ -2128,6 +2186,12 @@ async def verify_payment_order(
             INSERT INTO tournament_participants (id, tournament_id, user_id, checked_in, registered_at)
             VALUES (?, ?, ?, 1, ?)
             """, (str(uuid.uuid4()), tournament_id, user["id"], now_iso))
+
+            cursor.execute("""
+            UPDATE payment_orders 
+            SET status = 'PAID', payment_id = ?, signature = ?, paid_at = ?
+            WHERE order_id = ?
+            """, (req.payment_id, req.signature, now_iso, req.order_id))
             conn.commit()
 
             await ws_manager.broadcast({

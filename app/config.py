@@ -9,13 +9,35 @@ PORT = int(os.environ.get("NEXUS_PORT", 8088))
 DEBUG = os.environ.get("NEXUS_DEBUG", "false").strip().lower() == "true"
 
 # Security & Cryptography
-_default_secret = "nexus_arena_production_master_jwt_secret_key_2026_secured_99a8b7c6"
-SECRET_KEY = os.environ.get("NEXUS_SECRET_KEY") or _default_secret
+import hashlib
+import secrets
+import logging
+
+_logger = logging.getLogger("nexus.config")
+
+_env_secret = os.environ.get("NEXUS_SECRET_KEY")
+if _env_secret:
+    SECRET_KEY = _env_secret
+elif DEBUG:
+    SECRET_KEY = "nexus_arena_dev_debug_secret_key_for_local_testing_only_2026"
+    _logger.warning("⚠️ Running with developer debug SECRET_KEY in local DEBUG mode. Set NEXUS_SECRET_KEY in production.")
+else:
+    # High-entropy production fallback: persist unique server instance secret
+    _secret_file = BASE_DIR / "data" / ".nexus_secret"
+    try:
+        if _secret_file.exists():
+            SECRET_KEY = _secret_file.read_text(encoding="utf-8").strip()
+        else:
+            SECRET_KEY = secrets.token_urlsafe(64)
+            _secret_file.parent.mkdir(parents=True, exist_ok=True)
+            _secret_file.write_text(SECRET_KEY, encoding="utf-8")
+    except Exception:
+        SECRET_KEY = secrets.token_urlsafe(64)
+
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_MINUTES = 60 * 24  # 24 hours
 
 # AES-256-GCM Envelope Encryption Key (Derived 32 bytes)
-import hashlib
 MASTER_ENCRYPTION_KEY = hashlib.sha256(SECRET_KEY.encode('utf-8')).digest()
 
 # Database

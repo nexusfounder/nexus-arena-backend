@@ -1778,7 +1778,7 @@ function updateHeaderProfile() {
     if (bioTagsEl && state.user && state.user.gamer_tags) {
         let tagsArr = Array.isArray(state.user.gamer_tags) ? state.user.gamer_tags : String(state.user.gamer_tags).split(',').map(t => t.trim()).filter(Boolean);
         if (tagsArr.length > 0) {
-            bioTagsEl.innerHTML = tagsArr.map(t => `<span class="px-2 py-0.5 rounded-md text-[10px] font-mono bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">${t.startsWith('#') ? t : '#' + t}</span>`).join('');
+            bioTagsEl.innerHTML = tagsArr.map(t => `<span class="px-2 py-0.5 rounded-md text-[10px] font-mono bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">${escapeHtml(t.startsWith('#') ? t : '#' + t)}</span>`).join('');
         }
     }
 
@@ -8951,17 +8951,17 @@ async function loadAdminTicketsTab() {
                                     <span class="text-[10px] text-gray-400 font-mono">${new Date(t.created_at).toLocaleString()}</span>
                                 </div>
                                 <div>
-                                    <h5 class="font-bold text-white text-sm">${t.subject}</h5>
-                                    <p class="text-xs text-gray-300 pt-1">${t.description}</p>
-                                    <p class="text-[10px] text-gray-400 pt-1">User: <strong class="text-cyan-400">${t.creator_name}</strong> (${t.creator_email || 'No email'}) ${t.related_id ? `&bull; Related ID: <span class="font-mono text-gray-300">${t.related_id}</span>` : ''}</p>
+                                    <h5 class="font-bold text-white text-sm">${escapeHtml(t.subject)}</h5>
+                                    <p class="text-xs text-gray-300 pt-1">${escapeHtml(t.description)}</p>
+                                    <p class="text-[10px] text-gray-400 pt-1">User: <strong class="text-cyan-400">${escapeHtml(t.creator_name)}</strong> (${escapeHtml(t.creator_email || 'No email')}) ${t.related_id ? `&bull; Related ID: <span class="font-mono text-gray-300">${escapeHtml(t.related_id)}</span>` : ''}</p>
                                 </div>
                                 ${t.resolution ? `
                                     <div class="p-2.5 rounded-xl bg-cyber-card border border-green-500/30 text-green-300">
-                                        <strong>Resolution:</strong> ${t.resolution}
+                                        <strong>Resolution:</strong> ${escapeHtml(t.resolution)}
                                     </div>
                                 ` : ''}
                                 <div class="flex justify-end pt-2 border-t border-cyber-border/60">
-                                    <button onclick="openResolveTicketModal('${t.id}', '${t.ticket_number}', '${t.subject.replace(/'/g, "\\'")}')" class="px-3.5 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 text-xs font-bold transition-all flex items-center gap-1.5">
+                                    <button onclick="openResolveTicketModal('${escapeHtml(t.id)}', '${escapeHtml(t.ticket_number)}', '${escapeHtml(t.subject).replace(/'/g, "\\'")}')" class="px-3.5 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/40 text-xs font-bold transition-all flex items-center gap-1.5">
                                         <i class="fa-solid fa-gavel text-amber-400"></i> ${isResolved ? 'Update Resolution' : 'Triage & Resolve'}
                                     </button>
                                 </div>
@@ -9113,11 +9113,11 @@ async function loadMyTickets() {
                     </div>
                     <span class="text-[10px] text-gray-400">${new Date(t.created_at).toLocaleDateString()}</span>
                 </div>
-                <h6 class="font-bold text-white text-sm">${t.subject}</h6>
-                <p class="text-gray-300">${t.description}</p>
+                <h6 class="font-bold text-white text-sm">${escapeHtml(t.subject)}</h6>
+                <p class="text-gray-300">${escapeHtml(t.description)}</p>
                 ${t.resolution ? `
                     <div class="p-2.5 rounded-xl bg-cyber-card border border-green-500/30 text-green-300 text-xs">
-                        <strong>Operations Response:</strong> ${t.resolution}
+                        <strong>Operations Response:</strong> ${escapeHtml(t.resolution)}
                     </div>
                 ` : '<p class="text-[10px] text-gray-400 italic">Our team is reviewing your ticket.</p>'}
             </div>
