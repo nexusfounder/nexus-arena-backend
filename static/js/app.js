@@ -13931,7 +13931,13 @@ function loginWithGoogle() {
             showToast("Opening Google Secure Sign-In...", "info");
             firebase.auth().signInWithRedirect(provider).catch((err) => {
                 console.error("signInWithRedirect error:", err);
-                showToast("Redirect error: " + (err.message || "Failed to open Google"), "error");
+                if (err.code === 'auth/operation-not-allowed' || err.code === 'auth/configuration-not-found') {
+                    showToast("⚠️ Google Sign-In needs activation in Firebase Console. Enable Google under Authentication > Sign-in method.", "warning", 10000);
+                } else if (err.code === 'auth/unauthorized-domain') {
+                    showToast("⚠️ Domain not authorized: In Firebase Console > Authentication > Settings > Authorized domains, add nexusgamingarena.online", "warning", 10000);
+                } else {
+                    showToast("Google Sign-In: " + (err.message || "Authentication failed"), "error");
+                }
             });
             return;
         }
