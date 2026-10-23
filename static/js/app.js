@@ -1101,7 +1101,7 @@ async function performUnifiedLogin(u, p, c2fa = "", rememberMe = true) {
             if (data.status === "VERIFICATION_REQUIRED") {
                 if (typeof playCyberSound === 'function') playCyberSound('error');
                 showToast("📬 " + data.message, "warning");
-                openAccountVerificationModal(data.email || u);
+                openAccountVerificationModal(data.email || u, data.demo_otp || "");
                 return false;
             }
             recordFailedAttempt(data.detail || "❌ Invalid credentials. Access denied.");

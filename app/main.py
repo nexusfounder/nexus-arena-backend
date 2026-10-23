@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config import BASE_DIR, SECRET_KEY, PLATFORM_ESCROW_ACCOUNT_ID, PLATFORM_REVENUE_ACCOUNT_ID, SUPPORTED_GAMES, DEBUG
+from .config import BASE_DIR, SECRET_KEY, PLATFORM_ESCROW_ACCOUNT_ID, PLATFORM_REVENUE_ACCOUNT_ID, SUPPORTED_GAMES, DEBUG, ADMIN_CREDENTIALS_BACKUP_PATH
 from .database import get_db_connection, init_db
 from .security import (
     hash_password, verify_password, create_jwt_token, verify_jwt_token,
@@ -386,12 +386,14 @@ def register_user(req: UserRegisterRequest, request: Request, response: Response
         conn.commit()
         logger.info(f"[VERIFICATION_WALL] User registered: {req.username} ({req.email}). Verification OTP: {verification_otp}")
 
+        is_sandbox_telecom = not bool(os.environ.get("FAST2SMS_API_KEY") or os.environ.get("SMTP_HOST"))
         return {
             "status": "VERIFICATION_SENT",
-            "message": "Registration received! A 6-digit verification code has been dispatched to your email address.",
+            "message": "Registration received! A 6-digit verification code has been dispatched. Enter the code to activate your account.",
             "requires_verification": True,
             "email": req.email,
-            "username": req.username
+            "username": req.username,
+            "demo_otp": verification_otp if is_sandbox_telecom else None
         }
     finally:
         conn.close()
@@ -621,7 +623,18 @@ def google_auth_login(req: GoogleAuthRequest, response: Response):
             """, (user_id, uname, email, pw_hash, avatar, now_iso))
             conn.commit()
 
-            get_or_create_user_account(user_id, conn)
+            acc_id = get_or_create_user_account(user_id, conn)
+            record_transaction(
+                debit_account_id=PLATFORM_ESCROW_ACCOUNT_ID,
+                credit_account_id=acc_id,
+                amount_cents=10000,
+                category="DEPOSIT",
+                idempotency_key=f"signup_bonus_{user_id}",
+                description="Welcome Sign-up Esports Credits",
+                check_balance=False,
+                conn=conn
+            )
+            conn.commit()
 
             cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
             user_dict = dict(cursor.fetchone())
@@ -717,10 +730,14 @@ def login_user(req: UserLoginRequest, request: Request, response: Response):
 
         # Check verification wall
         if user_status == "PENDING_VERIFICATION":
+            cursor.execute("SELECT code FROM otp_codes WHERE identifier = ? AND otp_type = 'ACCOUNT_VERIFICATION' ORDER BY created_at DESC LIMIT 1", (user["email"],))
+            otp_r = cursor.fetchone()
+            is_sandbox_telecom = not bool(os.environ.get("FAST2SMS_API_KEY") or os.environ.get("SMTP_HOST"))
             return {
                 "status": "VERIFICATION_REQUIRED",
-                "message": "Account pending verification. Please validate the 6-digit OTP sent to your email to activate.",
-                "email": user["email"]
+                "message": "Account pending verification. Please validate the 6-digit OTP to activate.",
+                "email": user["email"],
+                "demo_otp": otp_r["code"] if (otp_r and is_sandbox_telecom) else None
             }
 
         # Check 2FA if enabled (Table 2 Isolated Storage & Envelope Decryption)
@@ -3566,6 +3583,18 @@ def update_admin_credentials_route(
         VALUES (?, ?, 'ADMIN_CREDENTIALS_UPDATED', ?, 'internal', ?)
         """, (str(uuid.uuid4()), user["id"], f"Admin credentials changed: username='{updated_username}'", now_iso))
         conn.commit()
+
+        # Persist updated admin credentials to disk backup so restarts never revert
+        try:
+            ADMIN_CREDENTIALS_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
+            ADMIN_CREDENTIALS_BACKUP_PATH.write_text(json.dumps({
+                "username": updated_username,
+                "email": user["email"],
+                "password_hash": new_hash if (req.new_password and req.new_password.strip()) else user["password_hash"],
+                "updated_at": now_iso
+            }, indent=2), encoding="utf-8")
+        except Exception as write_err:
+            logger.warning(f"Could not persist admin credentials backup: {write_err}")
 
         # Generate fresh new token with updated username
         new_token = create_jwt_token({

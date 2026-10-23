@@ -3,7 +3,11 @@ import json
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
-from .config import DB_PATH, PLATFORM_ESCROW_ACCOUNT_ID, PLATFORM_REVENUE_ACCOUNT_ID
+import os
+from .config import (
+    DB_PATH, PLATFORM_ESCROW_ACCOUNT_ID, PLATFORM_REVENUE_ACCOUNT_ID,
+    ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_EMAIL, ADMIN_CREDENTIALS_BACKUP_PATH
+)
 
 # Ensure data directory exists
 DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -626,11 +630,70 @@ def init_db():
         """, default_ticker)
         conn.commit()
 
-    # Ensure Master Admin account exists
-    cursor.execute("SELECT id FROM users WHERE username = ?", ("admin",))
+    # Ensure Master Admin account exists and load persistent credentials
+    from .security import hash_password
+
+    # Check for saved admin credentials from file
+    saved_creds = {}
+    if ADMIN_CREDENTIALS_BACKUP_PATH.exists():
+        try:
+            saved_creds = json.loads(ADMIN_CREDENTIALS_BACKUP_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            saved_creds = {}
+
+    env_uname = os.environ.get("ADMIN_USERNAME")
+    env_pw = os.environ.get("ADMIN_PASSWORD")
+    env_email = os.environ.get("ADMIN_EMAIL")
+
+    desired_uname = env_uname or saved_creds.get("username") or ADMIN_USERNAME or "admin"
+    desired_hash = hash_password(env_pw) if env_pw else (saved_creds.get("password_hash") or hash_password(ADMIN_PASSWORD or "admin"))
+    desired_email = env_email or saved_creds.get("email") or ADMIN_EMAIL or "admin@nexusgamingarena.online"
+
+    # Query for ANY existing admin or superadmin to prevent accidental overwrite or duplicate admin creation
+    cursor.execute("SELECT id, username, email, password_hash, role FROM users WHERE role IN ('ADMIN', 'SUPERADMIN') LIMIT 1")
     admin_row = cursor.fetchone()
-    if not admin_row:
-        from .security import hash_password
+
+    if admin_row:
+        # Admin account already exists in DB. Update only if explicit environment variables are provided
+        admin_id = admin_row["id"]
+        needs_update = False
+        updates = []
+        params = []
+
+        if env_pw:
+            updates.append("password_hash = ?")
+            params.append(desired_hash)
+            needs_update = True
+        if env_uname and env_uname != admin_row["username"]:
+            updates.append("username = ?")
+            params.append(env_uname)
+            needs_update = True
+        if env_email and env_email != admin_row["email"]:
+            updates.append("email = ?")
+            params.append(env_email)
+            needs_update = True
+
+        if needs_update:
+            params.append(admin_id)
+            cursor.execute(f"UPDATE users SET {', '.join(updates)} WHERE id = ?", params)
+            conn.commit()
+
+        # Update backup file with current state
+        try:
+            cursor.execute("SELECT username, email, password_hash FROM users WHERE id = ?", (admin_id,))
+            current_admin = cursor.fetchone()
+            if current_admin:
+                ADMIN_CREDENTIALS_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
+                ADMIN_CREDENTIALS_BACKUP_PATH.write_text(json.dumps({
+                    "username": current_admin["username"],
+                    "email": current_admin["email"],
+                    "password_hash": current_admin["password_hash"],
+                    "updated_at": datetime.now(timezone.utc).isoformat()
+                }, indent=2), encoding="utf-8")
+        except Exception:
+            pass
+    else:
+        # No admin found at all (fresh DB initialization)
         admin_id = str(uuid.uuid4())
         now_str = datetime.now(timezone.utc).isoformat()
         cursor.execute("""
@@ -639,13 +702,31 @@ def init_db():
             phone_number, phone_verified, two_factor_enabled,
             elo_rating, tournaments_won, matches_played, matches_won,
             status, created_at
-        ) VALUES (?, 'admin', 'admin@nexusgamingarena.online', ?, 'ADMIN', ?, '+91 9800011122', 1, 0, 2600, 0, 0, 0, 'ACTIVE', ?)
-        """, (admin_id, hash_password("admin"), "https://api.dicebear.com/7.x/bottts/svg?seed=admin", now_str))
+        ) VALUES (?, ?, ?, ?, 'ADMIN', ?, '+91 9800011122', 1, 0, 2600, 0, 0, 0, 'ACTIVE', ?)
+        """, (
+            admin_id,
+            desired_uname,
+            desired_email,
+            desired_hash,
+            f"https://api.dicebear.com/7.x/bottts/svg?seed={desired_uname}",
+            now_str
+        ))
 
         cursor.execute("""
         INSERT INTO accounts (id, user_id, account_type, currency, created_at)
         VALUES (?, ?, 'USER_WALLET', 'INR', ?)
         """, (str(uuid.uuid4()), admin_id, now_str))
+
+        try:
+            ADMIN_CREDENTIALS_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
+            ADMIN_CREDENTIALS_BACKUP_PATH.write_text(json.dumps({
+                "username": desired_uname,
+                "email": desired_email,
+                "password_hash": desired_hash,
+                "updated_at": now_str
+            }, indent=2), encoding="utf-8")
+        except Exception:
+            pass
 
     conn.commit()
     conn.close()

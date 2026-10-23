@@ -90,10 +90,8 @@ wheels/
 *.egg
 .pytest_cache/
 
-# Local databases
-*.db
+# Local databases (nexus_arena.db baseline is tracked for cloud container persistence)
 *.sqlite3
-data/*.db
 data/.nexus_secret
 *.secret
 

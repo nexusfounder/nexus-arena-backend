@@ -43,6 +43,12 @@ MASTER_ENCRYPTION_KEY = hashlib.sha256(SECRET_KEY.encode('utf-8')).digest()
 # Database
 DB_PATH = BASE_DIR / "data" / "nexus_arena.db"
 
+# Master Administrator Credential Locks (Configurable via Environment Variables)
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin").strip()
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin").strip()
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@nexusgamingarena.online").strip()
+ADMIN_CREDENTIALS_BACKUP_PATH = BASE_DIR / "data" / ".admin_credentials"
+
 # Platform Financial Escrow Account ID
 PLATFORM_ESCROW_ACCOUNT_ID = "00000000-0000-0000-0000-000000000001"
 PLATFORM_REVENUE_ACCOUNT_ID = "00000000-0000-0000-0000-000000000002"
