@@ -574,7 +574,7 @@ def link_guest_user(req: LinkGuestRequest, user: Dict[str, Any] = Depends(get_cu
         conn.close()
 
 @app.post("/api/auth/google")
-def google_auth_login(req: GoogleAuthRequest, TickerItemCreateRequest, TickerItemUpdateRequest, response: Response):
+def google_auth_login(req: GoogleAuthRequest, response: Response):
     email = req.email.strip().lower()
     if not email:
         raise HTTPException(status_code=400, detail="Google email is required.")

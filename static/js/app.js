@@ -189,22 +189,30 @@ let adminTabHistory = [];
 // 1. INITIALIZATION
 // ==========================================
 
+function safeCall(name, fn) {
+    try {
+        if (typeof fn === 'function') fn();
+    } catch (err) {
+        console.error(`[App Startup] Non-fatal error in ${name}:`, err);
+    }
+}
+
 function startApp() {
-    initRememberMeCheckboxListeners();
-    initCanvasParticles();
-    initHeroCountdown();
-    loadLiveTicker();
-    initWebSocket();
-    initFirebaseServices();
-    initCurrentUser();
-    loadTournaments();
-    loadPopularityTrends();
-    loadQuests();
-    loadLeaderboard();
-    loadVideos();
-    loadTransactions();
-    loadHomepageSections();
-    initSidebarState();
+    safeCall("initRememberMeCheckboxListeners", initRememberMeCheckboxListeners);
+    safeCall("initCanvasParticles", initCanvasParticles);
+    safeCall("initHeroCountdown", initHeroCountdown);
+    safeCall("initFirebaseServices", initFirebaseServices);
+    safeCall("loadLiveTicker", loadLiveTicker);
+    safeCall("initWebSocket", initWebSocket);
+    safeCall("initCurrentUser", initCurrentUser);
+    safeCall("loadTournaments", loadTournaments);
+    safeCall("loadPopularityTrends", loadPopularityTrends);
+    safeCall("loadQuests", loadQuests);
+    safeCall("loadLeaderboard", loadLeaderboard);
+    safeCall("loadVideos", loadVideos);
+    safeCall("loadTransactions", loadTransactions);
+    safeCall("loadHomepageSections", loadHomepageSections);
+    safeCall("initSidebarState", initSidebarState);
 }
 
 
@@ -488,7 +496,7 @@ let firebaseStorage = null;
 
 function initFirebaseServices() {
     if (typeof firebase === 'undefined') {
-        console.warn("[Firebase] SDK script not loaded.");
+        console.warn("[Firebase] SDK script not loaded yet.");
         return;
     }
     try {
@@ -497,13 +505,42 @@ function initFirebaseServices() {
         } else {
             firebaseApp = firebase.app();
         }
-        firebaseDb = firebase.database();
-        try {
-            firebaseStorage = firebase.storage();
-        } catch (stErr) {
-            console.warn("[Firebase Storage] Module init notice:", stErr);
+        if (typeof firebase.database === 'function') {
+            try { firebaseDb = firebase.database(); } catch(dbErr) { console.warn("[Firebase RTDB]", dbErr); }
         }
-        console.log("⚡ [Firebase] Realtime Database & Storage connected for:", firebaseConfig.projectId);
+        if (typeof firebase.storage === 'function') {
+            try { firebaseStorage = firebase.storage(); } catch (stErr) { console.warn("[Firebase Storage]", stErr); }
+        }
+        console.log("⚡ [Firebase] Services initialized for:", firebaseConfig.projectId);
+
+        // Check for Google redirect result (crucial for mobile devices)
+        if (firebase.auth && typeof firebase.auth === 'function') {
+            try {
+                firebase.auth().getRedirectResult()
+                    .then(async (result) => {
+                        if (result && result.user) {
+                            const u = result.user;
+                            let idToken = null;
+                            try { idToken = await u.getIdToken(); } catch(e){}
+                            await handleGoogleAuthSuccess({
+                                displayName: u.displayName || (u.email ? u.email.split('@')[0] : "Google Gamer"),
+                                email: u.email || "",
+                                photoURL: u.photoURL || "",
+                                uid: u.uid || ("g_" + Date.now()),
+                                idToken: idToken,
+                                keepLoggedIn: true
+                            });
+                        }
+                    })
+                    .catch((redErr) => {
+                        if (redErr.code !== 'auth/credential-already-in-use') {
+                            console.warn("[Firebase Auth Redirect Result]:", redErr);
+                        }
+                    });
+            } catch (authErr) {
+                console.warn("[Firebase Auth]", authErr);
+            }
+        }
 
         setupRealtimePresence();
         setupRealtimeTournaments();
@@ -513,6 +550,10 @@ function initFirebaseServices() {
     }
 }
 window.initFirebaseServices = initFirebaseServices;
+// Eager bootstrap immediately if SDK is available
+if (typeof firebase !== 'undefined') {
+    try { initFirebaseServices(); } catch(e) {}
+}
 
 // 1. Realtime Player Presence & Mumbai Cluster Ping
 function setupRealtimePresence() {
@@ -13860,7 +13901,22 @@ function loginWithGoogle() {
     if (typeof playCyberSound === "function") playCyberSound("click");
     showToast("Connecting to Google Authentication...", "info");
 
-    if (typeof firebase === 'undefined' || !firebase.auth) {
+    // 1. Ensure Firebase Core SDK is loaded
+    if (typeof firebase === 'undefined') {
+        showToast("Google Authentication SDK is still loading. Please check your internet connection.", "error");
+        return;
+    }
+
+    // 2. Guarantee Default Firebase App is initialized (eliminates 'no-app' error)
+    if (!firebase.apps || !firebase.apps.length) {
+        try {
+            firebase.initializeApp(firebaseConfig);
+        } catch (initErr) {
+            console.warn("Firebase initializeApp note in loginWithGoogle:", initErr);
+        }
+    }
+
+    if (!firebase.auth) {
         showToast("Authentication service unavailable. Please check your network connection.", "error");
         return;
     }
@@ -13869,6 +13925,18 @@ function loginWithGoogle() {
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
 
+        // Mobile detection: On touch/mobile devices, signInWithRedirect is drastically more reliable than popups
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            showToast("Opening Google Secure Sign-In...", "info");
+            firebase.auth().signInWithRedirect(provider).catch((err) => {
+                console.error("signInWithRedirect error:", err);
+                showToast("Redirect error: " + (err.message || "Failed to open Google"), "error");
+            });
+            return;
+        }
+
+        // Desktop: Use popup with automatic redirect fallback
         firebase.auth().signInWithPopup(provider)
             .then(async (result) => {
                 const u = result.user;
@@ -13889,18 +13957,25 @@ function loginWithGoogle() {
                     keepLoggedIn: true
                 });
             })
-            .catch((error) => {
+            .catch(async (error) => {
                 console.error("[Google Auth Error]:", error);
                 if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
                     // User deliberately closed popup window
+                    return;
+                }
+                if (error.code === 'auth/popup-blocked') {
+                    showToast("Popup blocked by browser. Redirecting to Google Sign-In...", "info");
+                    try {
+                        await firebase.auth().signInWithRedirect(provider);
+                    } catch (rErr) {
+                        showToast("Redirect error: " + (rErr.message || "Authentication failed"), "error");
+                    }
                     return;
                 }
                 if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/configuration-not-found') {
                     showToast("⚠️ Google Sign-In needs activation in Firebase Console. In Console > Authentication > Sign-in method, enable Google.", "warning", 8000);
                 } else if (error.code === 'auth/unauthorized-domain') {
                     showToast("⚠️ Domain not authorized: In Firebase Console > Authentication > Settings > Authorized domains, add nexusgamingarena.online", "warning", 8000);
-                } else if (error.code === 'auth/popup-blocked') {
-                    showToast("Popup blocked by browser. Please allow popups for this site or try again.", "error");
                 } else {
                     showToast("Google Sign-In: " + (error.message || "Authentication failed"), "error");
                 }
@@ -14243,3 +14318,265 @@ async function handleUserChangeCredentials(e) {
     }
 }
 window.handleUserChangeCredentials = handleUserChangeCredentials;
+
+// ==========================================
+// 20. LIVE ESPORTS TICKER & ADMIN BROADCASTS
+// ==========================================
+
+async function loadLiveTicker() {
+    try {
+        const res = await fetch("/api/ticker");
+        if (!res.ok) return;
+        const data = await res.json();
+        const items = data.items || [];
+        if (!items.length) return;
+
+        const track1 = document.getElementById("live-marquee-track-1");
+        const track2 = document.getElementById("live-marquee-track-2");
+        if (!track1) return;
+
+        const html = items.map(it => {
+            const icon = it.icon || "fa-bolt";
+            const colorClass = it.tag_color === 'red' ? 'text-red-400' :
+                               it.tag_color === 'emerald' ? 'text-emerald-400' :
+                               it.tag_color === 'violet' ? 'text-violet-400' :
+                               it.tag_color === 'amber' ? 'text-amber-400' : 'text-cyan-400';
+            const linkAttr = it.link_url ? `onclick="window.location.href='${escapeHtml(it.link_url)}'"` : '';
+            const cursorClass = it.link_url ? 'cursor-pointer hover:underline' : '';
+            return `
+                <span class="flex items-center gap-2 ${cursorClass}" ${linkAttr}>
+                    <i class="fa-solid ${escapeHtml(icon)} ${colorClass}"></i>
+                    <strong class="${colorClass}">${escapeHtml(it.title)}:</strong>
+                    <span>${escapeHtml(it.message)}</span>
+                </span>
+            `;
+        }).join('<span class="text-cyan-500/40">•</span>');
+
+        track1.innerHTML = html;
+        if (track2) track2.innerHTML = html;
+    } catch (e) {
+        console.warn("[Ticker] Failed to load marquee announcements:", e);
+    }
+}
+window.loadLiveTicker = loadLiveTicker;
+
+async function loadAdminTickerTab() {
+    const container = document.getElementById("admin-tab-container");
+    if (!container) return;
+
+    try {
+        const res = await fetch("/api/admin/ticker", {
+            headers: state.token ? { "Authorization": `Bearer ${state.token}` } : {}
+        });
+        const data = res.ok ? await res.json() : { items: [] };
+        const items = data.items || [];
+
+        container.innerHTML = `
+            <div class="space-y-6 animate-in fade-in duration-200">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-cyber-dark/80 border border-cyber-border">
+                    <div>
+                        <h4 class="font-orbitron font-extrabold text-white text-base flex items-center gap-2">
+                            <i class="fa-solid fa-bullhorn text-red-400"></i> LIVE MARQUEE &amp; BROADCAST MANAGER
+                        </h4>
+                        <p class="text-xs text-gray-400 font-rajdhani pt-1">
+                            Publish real-time announcements, urgent tournament alerts, and sponsor shoutouts directly to the top marquee ticker.
+                        </p>
+                    </div>
+                    <button onclick="openCreateTickerModal()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-red-500 to-amber-500 hover:brightness-110 text-white font-bold text-xs flex items-center gap-2 transition-all glow-pink cursor-pointer">
+                        <i class="fa-solid fa-plus"></i> New Broadcast
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto rounded-2xl border border-cyber-border bg-cyber-dark/60">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-cyber-card/80 text-[10px] text-gray-400 font-mono uppercase border-b border-cyber-border">
+                            <tr>
+                                <th class="p-3">Order</th>
+                                <th class="p-3">Tag & Title</th>
+                                <th class="p-3">Message</th>
+                                <th class="p-3">Link</th>
+                                <th class="p-3">Status</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-cyber-border/40 font-rajdhani text-sm">
+                            ${items.length === 0 ? `
+                                <tr>
+                                    <td colspan="6" class="p-8 text-center text-gray-500 text-xs">
+                                        No ticker announcements configured yet. Click "New Broadcast" to create one.
+                                    </td>
+                                </tr>
+                            ` : items.map(it => {
+                                const colorClass = it.tag_color === 'red' ? 'bg-red-500/20 text-red-400 border-red-500/40' :
+                                                   it.tag_color === 'emerald' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' :
+                                                   it.tag_color === 'violet' ? 'bg-violet-500/20 text-violet-400 border-violet-500/40' :
+                                                   it.tag_color === 'amber' ? 'bg-amber-500/20 text-amber-400 border-amber-500/40' :
+                                                   'bg-cyan-500/20 text-cyan-400 border-cyan-500/40';
+                                return `
+                                    <tr class="hover:bg-cyber-card/40 transition-colors">
+                                        <td class="p-3 font-mono text-gray-400">${it.sort_order}</td>
+                                        <td class="p-3">
+                                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold border ${colorClass}">
+                                                <i class="fa-solid ${escapeHtml(it.icon || 'fa-bolt')}"></i>
+                                                ${escapeHtml(it.title)}
+                                            </span>
+                                        </td>
+                                        <td class="p-3 text-gray-200 max-w-xs truncate">${escapeHtml(it.message)}</td>
+                                        <td class="p-3 text-gray-400 font-mono text-[10px] truncate">${it.link_url ? escapeHtml(it.link_url) : '—'}</td>
+                                        <td class="p-3">
+                                            <button onclick="toggleTickerActive('${escapeHtml(it.id)}', ${it.is_active ? 0 : 1})" class="px-2 py-0.5 rounded text-[10px] font-bold cursor-pointer transition-all ${it.is_active ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-gray-500/20 text-gray-400 border border-gray-500/40'}">
+                                                ${it.is_active ? 'ACTIVE' : 'PAUSED'}
+                                            </button>
+                                        </td>
+                                        <td class="p-3 text-right space-x-1 whitespace-nowrap">
+                                            <button onclick="openEditTickerModal(${JSON.stringify(it).replace(/"/g, '&quot;')})" class="px-2.5 py-1 rounded-lg bg-cyber-card hover:bg-cyber-border text-gray-300 hover:text-white transition-all text-xs" title="Edit">
+                                                <i class="fa-solid fa-pen-to-square"></i>
+                                            </button>
+                                            <button onclick="deleteTickerItem('${escapeHtml(it.id)}')" class="px-2.5 py-1 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition-all text-xs" title="Delete">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        container.innerHTML = `<div class="p-8 text-center text-red-400 text-xs font-bold">Failed to load ticker data: ${e.message}</div>`;
+    }
+}
+window.loadAdminTickerTab = loadAdminTickerTab;
+
+function openCreateTickerModal() {
+    playCyberSound('click');
+    const idEl = document.getElementById('edit-ticker-id');
+    const titleEl = document.getElementById('edit-ticker-title');
+    const msgEl = document.getElementById('edit-ticker-message');
+    const colorEl = document.getElementById('edit-ticker-color');
+    const iconEl = document.getElementById('edit-ticker-icon');
+    const linkEl = document.getElementById('edit-ticker-link');
+    const activeEl = document.getElementById('edit-ticker-active');
+
+    if (idEl) idEl.value = '';
+    if (titleEl) titleEl.value = '';
+    if (msgEl) msgEl.value = '';
+    if (colorEl) colorEl.value = 'cyan';
+    if (iconEl) iconEl.value = 'fa-bolt';
+    if (linkEl) linkEl.value = '';
+    if (activeEl) activeEl.checked = true;
+
+    openModal('modal-admin-edit-ticker');
+}
+window.openCreateTickerModal = openCreateTickerModal;
+
+function openEditTickerModal(item) {
+    playCyberSound('click');
+    if (!item) return;
+
+    const idEl = document.getElementById('edit-ticker-id');
+    const titleEl = document.getElementById('edit-ticker-title');
+    const msgEl = document.getElementById('edit-ticker-message');
+    const colorEl = document.getElementById('edit-ticker-color');
+    const iconEl = document.getElementById('edit-ticker-icon');
+    const linkEl = document.getElementById('edit-ticker-link');
+    const activeEl = document.getElementById('edit-ticker-active');
+
+    if (idEl) idEl.value = item.id || '';
+    if (titleEl) titleEl.value = item.title || '';
+    if (msgEl) msgEl.value = item.message || '';
+    if (colorEl) colorEl.value = item.tag_color || 'cyan';
+    if (iconEl) iconEl.value = item.icon || 'fa-bolt';
+    if (linkEl) linkEl.value = item.link_url || '';
+    if (activeEl) activeEl.checked = Boolean(item.is_active);
+
+    openModal('modal-admin-edit-ticker');
+}
+window.openEditTickerModal = openEditTickerModal;
+
+async function handleSaveEditedTicker(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    playCyberSound('click');
+
+    const id = (document.getElementById('edit-ticker-id')?.value || '').trim();
+    const title = (document.getElementById('edit-ticker-title')?.value || '').trim();
+    const message = (document.getElementById('edit-ticker-message')?.value || '').trim();
+    const tag_color = document.getElementById('edit-ticker-color')?.value || 'cyan';
+    const icon = document.getElementById('edit-ticker-icon')?.value || 'fa-bolt';
+    const link_url = (document.getElementById('edit-ticker-link')?.value || '').trim();
+    const is_active = document.getElementById('edit-ticker-active')?.checked ? 1 : 0;
+
+    if (!title || !message) {
+        showToast("Title and message are required.", "warning");
+        return;
+    }
+
+    try {
+        const url = id ? `/api/admin/ticker/${id}` : "/api/admin/ticker";
+        const method = id ? "PUT" : "POST";
+        const res = await fetch(url, {
+            method: method,
+            headers: {
+                "Content-Type": "application/json",
+                ...(state.token ? { "Authorization": `Bearer ${state.token}` } : {})
+            },
+            body: JSON.stringify({
+                title, message, tag_color, icon, link_url, is_active: Boolean(is_active)
+            })
+        });
+
+        if (res.ok) {
+            closeModal('modal-admin-edit-ticker');
+            showToast(id ? "Ticker updated successfully!" : "Broadcast published live!", "success");
+            loadAdminTickerTab();
+            loadLiveTicker();
+        } else {
+            const err = await res.json();
+            showToast(err.detail || "Failed to save ticker.", "error");
+        }
+    } catch (err) {
+        showToast("Network error saving ticker.", "error");
+    }
+}
+window.handleSaveEditedTicker = handleSaveEditedTicker;
+
+async function toggleTickerActive(id, newStatus) {
+    try {
+        const res = await fetch(`/api/admin/ticker/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                ...(state.token ? { "Authorization": `Bearer ${state.token}` } : {})
+            },
+            body: JSON.stringify({ is_active: Boolean(newStatus) })
+        });
+        if (res.ok) {
+            showToast("Ticker status updated.", "info");
+            loadAdminTickerTab();
+            loadLiveTicker();
+        }
+    } catch (e) {
+        showToast("Error updating ticker status.", "error");
+    }
+}
+window.toggleTickerActive = toggleTickerActive;
+
+async function deleteTickerItem(id) {
+    if (!confirm("Are you sure you want to delete this ticker broadcast?")) return;
+    try {
+        const res = await fetch(`/api/admin/ticker/${id}`, {
+            method: "DELETE",
+            headers: state.token ? { "Authorization": `Bearer ${state.token}` } : {}
+        });
+        if (res.ok) {
+            showToast("Ticker deleted.", "info");
+            loadAdminTickerTab();
+            loadLiveTicker();
+        }
+    } catch (e) {
+        showToast("Error deleting ticker item.", "error");
+    }
+}
+window.deleteTickerItem = deleteTickerItem;
