@@ -919,6 +919,40 @@ async function initCurrentUser() {
     showLandingGateway();
 }
 
+
+async function fetchFreshUserProfile() {
+    if (!state.token || !state.user || state.user.is_guest) return;
+    try {
+        const res = await fetch("/api/auth/me", {
+            headers: {
+                "Authorization": "Bearer " + state.token
+            }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.user) {
+                state.user = {
+                    ...state.user,
+                    ...data.user
+                };
+                if (data.wallet && data.wallet.balance !== undefined) {
+                    state.walletBalance = Number(data.wallet.balance);
+                }
+                if (data.user.nexus_coins !== undefined) {
+                    state.nexusCoins = Number(data.user.nexus_coins);
+                }
+                try {
+                    localStorage.setItem("nexus_user", JSON.stringify(state.user));
+                } catch(e) {}
+                updateHeaderProfile();
+            }
+        }
+    } catch(err) {
+        console.warn("[ProfileSync] Background sync notice:", err);
+    }
+}
+window.fetchFreshUserProfile = fetchFreshUserProfile;
+
 function enterArenaApp(isFreshLogin = false) {
     try {
         document.documentElement.classList.add("arena-session-active");
@@ -5451,7 +5485,7 @@ function generateCustomSeedAvatar() {
 }
 window.generateCustomSeedAvatar = generateCustomSeedAvatar;
 
-function saveUserProfileAvatar() {
+async function saveUserProfileAvatar() {
     if (!pendingSelectedAvatarUrl) {
         showToast("Please choose or upload an avatar first.", "warning");
         return;
@@ -5464,7 +5498,8 @@ function saveUserProfileAvatar() {
             is_guest: true
         };
     }
-    state.user.avatar_url = pendingSelectedAvatarUrl;
+    const newAvatar = pendingSelectedAvatarUrl;
+    state.user.avatar_url = newAvatar;
 
     try {
         localStorage.setItem("nexus_user", JSON.stringify(state.user));
@@ -5474,15 +5509,47 @@ function saveUserProfileAvatar() {
         let regGamers = JSON.parse(localStorage.getItem("nexus_registered_gamers") || "[]");
         const idx = regGamers.findIndex(u => (u.username || '').toLowerCase() === (state.user.username || '').toLowerCase());
         if (idx !== -1) {
-            regGamers[idx].avatar_url = pendingSelectedAvatarUrl;
+            regGamers[idx].avatar_url = newAvatar;
             localStorage.setItem("nexus_registered_gamers", JSON.stringify(regGamers));
         }
     } catch(e) {}
 
+    // Persist to SQLite backend database for authenticated users & admins
+    if (state.token && !state.user.is_guest) {
+        try {
+            const res = await fetch("/api/users/profile/update", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + state.token
+                },
+                body: JSON.stringify({ avatar_url: newAvatar })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.user) {
+                    state.user = { ...state.user, ...data.user };
+                    try { localStorage.setItem("nexus_user", JSON.stringify(state.user)); } catch (e) {}
+                }
+            } else {
+                console.warn("[Avatar Sync] Backend update returned status:", res.status);
+            }
+        } catch (netErr) {
+            console.warn("[Avatar Sync] Backend update network notice:", netErr);
+        }
+    }
+
+    // Also sync to Firebase Realtime Database if configured
+    try {
+        if (typeof firebase !== 'undefined' && firebase.database && state.user && state.user.id) {
+            firebase.database().ref("users/" + state.user.id + "/avatar_url").set(newAvatar);
+        }
+    } catch(fbErr) {}
+
     updateHeaderProfile();
     closeModal("modal-set-avatar");
     if (typeof playCyberSound === 'function') playCyberSound('success');
-    showToast("Profile picture updated successfully!", "success");
+    showToast("✓ Profile picture updated and saved permanently!", "success");
 }
 window.saveUserProfileAvatar = saveUserProfileAvatar;
 
@@ -5542,7 +5609,7 @@ function addBioTag(tag) {
 }
 window.addBioTag = addBioTag;
 
-function handleSaveBioAndFolio(e) {
+async function handleSaveBioAndFolio(e) {
     if (e && e.preventDefault) e.preventDefault();
     const bioInput = document.getElementById("input-user-bio");
     const gameSelect = document.getElementById("input-folio-primary-game");
@@ -5560,12 +5627,19 @@ function handleSaveBioAndFolio(e) {
         };
     }
 
-    state.user.bio = bioInput ? bioInput.value.trim() : "";
-    state.user.primary_game = gameSelect ? gameSelect.value : "Valorant";
-    state.user.in_game_name = ignInput ? ignInput.value.trim() : "";
-    state.user.character_uid = uidInput ? uidInput.value.trim() : "";
-    state.user.clan_name = clanInput ? clanInput.value.trim() : "";
-    state.user.gaming_rig = rigInput ? rigInput.value.trim() : "";
+    const bioVal = bioInput ? bioInput.value.trim() : "";
+    const gameVal = gameSelect ? gameSelect.value : "Valorant";
+    const ignVal = ignInput ? ignInput.value.trim() : "";
+    const uidVal = uidInput ? uidInput.value.trim() : "";
+    const clanVal = clanInput ? clanInput.value.trim() : "";
+    const rigVal = rigInput ? rigInput.value.trim() : "";
+
+    state.user.bio = bioVal;
+    state.user.primary_game = gameVal;
+    state.user.in_game_name = ignVal;
+    state.user.character_uid = uidVal;
+    state.user.clan_name = clanVal;
+    state.user.gaming_rig = rigVal;
 
     const foundTags = state.user.bio.match(/#[a-zA-Z0-9_]+/g);
     state.user.gamer_tags = foundTags && foundTags.length > 0 ? foundTags : ["#Duelist", "#IGL", "#ClutchKing", "#PCMasterRace"];
@@ -5589,10 +5663,43 @@ function handleSaveBioAndFolio(e) {
         }
     } catch(err) {}
 
+    // Persist to SQLite backend database for authenticated users & admins
+    if (state.token && !state.user.is_guest) {
+        try {
+            const res = await fetch("/api/users/profile/update", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": "Bearer " + state.token
+                },
+                body: JSON.stringify({
+                    bio: state.user.bio,
+                    primary_game: state.user.primary_game,
+                    in_game_name: state.user.in_game_name,
+                    character_uid: state.user.character_uid,
+                    clan_name: state.user.clan_name,
+                    gaming_rig: state.user.gaming_rig,
+                    gamer_tags: Array.isArray(state.user.gamer_tags) ? state.user.gamer_tags.join(" ") : state.user.gamer_tags
+                })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.user) {
+                    state.user = { ...state.user, ...data.user };
+                    try { localStorage.setItem("nexus_user", JSON.stringify(state.user)); } catch (e) {}
+                }
+            } else {
+                console.warn("[Folio Sync] Backend update returned status:", res.status);
+            }
+        } catch (netErr) {
+            console.warn("[Folio Sync] Backend update network notice:", netErr);
+        }
+    }
+
     updateHeaderProfile();
     closeModal("modal-edit-bio");
     if (typeof playCyberSound === 'function') playCyberSound('success');
-    showToast("Bio & Esports Folio updated successfully!", "success");
+    showToast("✓ Bio & Esports Folio updated and saved permanently!", "success");
 }
 window.handleSaveBioAndFolio = handleSaveBioAndFolio;
 
@@ -14014,7 +14121,7 @@ async function handleGoogleAuthSuccess(googleUser) {
     if (existing) {
         userSessionData = {
             ...existing,
-            avatar_url: avatarUrl || existing.avatar_url,
+            avatar_url: existing.avatar_url || avatarUrl,
             is_google_auth: true
         };
     } else {

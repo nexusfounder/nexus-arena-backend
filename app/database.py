@@ -368,6 +368,13 @@ def init_db():
         "ALTER TABLE users ADD COLUMN bound_phone TEXT;",
         "ALTER TABLE users ADD COLUMN bound_email TEXT;",
         "ALTER TABLE users ADD COLUMN authenticator_app_bound INTEGER DEFAULT 1;",
+        "ALTER TABLE users ADD COLUMN bio TEXT;",
+        "ALTER TABLE users ADD COLUMN primary_game TEXT;",
+        "ALTER TABLE users ADD COLUMN in_game_name TEXT;",
+        "ALTER TABLE users ADD COLUMN character_uid TEXT;",
+        "ALTER TABLE users ADD COLUMN clan_name TEXT;",
+        "ALTER TABLE users ADD COLUMN gaming_rig TEXT;",
+        "ALTER TABLE users ADD COLUMN gamer_tags TEXT;",
         "ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'ACTIVE';",
         "ALTER TABLE users ADD COLUMN has_claimed_referral INTEGER DEFAULT 0;",
         "ALTER TABLE tournaments ADD COLUMN game_mode TEXT DEFAULT 'Squad (TPP)';",
@@ -648,13 +655,14 @@ def init_db():
     desired_uname = env_uname or saved_creds.get("username") or ADMIN_USERNAME or "admin"
     desired_hash = hash_password(env_pw) if env_pw else (saved_creds.get("password_hash") or hash_password(ADMIN_PASSWORD or "admin"))
     desired_email = env_email or saved_creds.get("email") or ADMIN_EMAIL or "admin@nexusgamingarena.online"
+    desired_avatar = saved_creds.get("avatar_url") or f"https://api.dicebear.com/7.x/bottts/svg?seed={desired_uname}"
 
     # Query for ANY existing admin or superadmin to prevent accidental overwrite or duplicate admin creation
-    cursor.execute("SELECT id, username, email, password_hash, role FROM users WHERE role IN ('ADMIN', 'SUPERADMIN') LIMIT 1")
+    cursor.execute("SELECT id, username, email, password_hash, role, avatar_url FROM users WHERE role IN ('ADMIN', 'SUPERADMIN') LIMIT 1")
     admin_row = cursor.fetchone()
 
     if admin_row:
-        # Admin account already exists in DB. Update only if explicit environment variables are provided
+        # Admin account already exists in DB. Update only if explicit environment variables or saved avatar are provided
         admin_id = admin_row["id"]
         needs_update = False
         updates = []
@@ -672,6 +680,11 @@ def init_db():
             updates.append("email = ?")
             params.append(env_email)
             needs_update = True
+        # If backup lockfile has a custom avatar not yet in DB, sync it to DB
+        if saved_creds.get("avatar_url") and saved_creds.get("avatar_url") != admin_row["avatar_url"]:
+            updates.append("avatar_url = ?")
+            params.append(saved_creds.get("avatar_url"))
+            needs_update = True
 
         if needs_update:
             params.append(admin_id)
@@ -680,7 +693,7 @@ def init_db():
 
         # Update backup file with current state
         try:
-            cursor.execute("SELECT username, email, password_hash FROM users WHERE id = ?", (admin_id,))
+            cursor.execute("SELECT username, email, password_hash, avatar_url FROM users WHERE id = ?", (admin_id,))
             current_admin = cursor.fetchone()
             if current_admin:
                 ADMIN_CREDENTIALS_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -688,6 +701,7 @@ def init_db():
                     "username": current_admin["username"],
                     "email": current_admin["email"],
                     "password_hash": current_admin["password_hash"],
+                    "avatar_url": current_admin["avatar_url"],
                     "updated_at": datetime.now(timezone.utc).isoformat()
                 }, indent=2), encoding="utf-8")
         except Exception:
@@ -708,7 +722,7 @@ def init_db():
             desired_uname,
             desired_email,
             desired_hash,
-            f"https://api.dicebear.com/7.x/bottts/svg?seed={desired_uname}",
+            desired_avatar,
             now_str
         ))
 
@@ -723,6 +737,7 @@ def init_db():
                 "username": desired_uname,
                 "email": desired_email,
                 "password_hash": desired_hash,
+                "avatar_url": desired_avatar,
                 "updated_at": now_str
             }, indent=2), encoding="utf-8")
         except Exception:

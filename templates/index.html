@@ -122,13 +122,6 @@
                         var role = (u.role || '').toUpperCase();
                         var uname = (u.username || '').toLowerCase();
                         var isAdmin = (role === 'ADMIN' || role === 'SUPERADMIN' || role === 'CO_ADMIN' || uname === 'wolfy' || uname === 'admin');
-                        if (isAdmin) {
-                            // High-security rule: Admin sessions must NEVER auto-login silently on cold reload/reopen
-                            localStorage.removeItem("nexus_user");
-                            localStorage.removeItem("nexus_token");
-                            sessionStorage.removeItem("nexus_active_session");
-                            return;
-                        }
                         window.__NEXUS_BOOT_USER = u;
                         document.documentElement.classList.add("arena-session-active");
                         if (u.role === 'GUEST' || u.is_guest) {
@@ -631,33 +624,33 @@
                         var role = (u.role || '').toUpperCase();
                         var uname = (u.username || '').toLowerCase();
                         var isAdmin = (role === 'ADMIN' || role === 'SUPERADMIN' || role === 'CO_ADMIN' || uname === 'wolfy' || uname === 'admin');
-                        if (!isAdmin) {
-                            var avatar = u.avatar_url || ("https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(u.username || 'nexus_player'));
-                            var avatarEl = document.getElementById("header-user-avatar");
-                            if (avatarEl) avatarEl.src = avatar;
-                            var nameEl = document.getElementById("header-user-name");
-                            if (nameEl) nameEl.textContent = u.username || 'Gamer';
-                            
-                            var bal = (u.wallet_balance !== undefined) ? Number(u.wallet_balance) : (u.is_guest ? 0 : 5000);
-                            var coins = (u.nexus_coins !== undefined) ? Number(u.nexus_coins) : (u.is_guest ? 100 : 1000);
-                            var walletEl = document.getElementById("header-wallet-balance");
-                            if (walletEl) walletEl.textContent = '₹' + Math.round(bal).toLocaleString('en-IN');
-                            var coinsEl = document.getElementById("header-nexus-coins");
-                            if (coinsEl) coinsEl.textContent = Number(coins).toLocaleString('en-IN');
-                            
-                            var loginBtn = document.getElementById("header-login-btn");
-                            if (loginBtn) {
-                                if (u.role === 'GUEST' || u.is_guest) {
-                                    loginBtn.style.display = 'flex';
-                                    loginBtn.innerHTML = '<i class="fa-solid fa-arrow-up-from-bracket text-xs"></i> <span class="hidden sm:inline">UPGRADE</span>';
-                                    loginBtn.className = "flex items-center gap-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-black px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-black hover:brightness-110 transition-all glow-gold cursor-pointer flex-shrink-0";
-                                } else {
-                                    loginBtn.style.display = 'none';
-                                }
+                        var avatar = u.avatar_url || ("https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(u.username || 'nexus_player'));
+                        var avatarEl = document.getElementById("header-user-avatar");
+                        if (avatarEl) avatarEl.src = avatar;
+                        var nameEl = document.getElementById("header-user-name");
+                        if (nameEl) nameEl.textContent = u.username || 'Gamer';
+                        
+                        var bal = (u.wallet_balance !== undefined) ? Number(u.wallet_balance) : (u.is_guest ? 0 : (isAdmin ? 50000 : 5000));
+                        var coins = (u.nexus_coins !== undefined) ? Number(u.nexus_coins) : (u.is_guest ? 100 : (isAdmin ? 10000 : 1000));
+                        var walletEl = document.getElementById("header-wallet-balance");
+                        if (walletEl) walletEl.textContent = '₹' + Math.round(bal).toLocaleString('en-IN');
+                        var coinsEl = document.getElementById("header-nexus-coins");
+                        if (coinsEl) coinsEl.textContent = Number(coins).toLocaleString('en-IN');
+                        
+                        var loginBtn = document.getElementById("header-login-btn");
+                        if (loginBtn) {
+                            if (u.role === 'GUEST' || u.is_guest) {
+                                loginBtn.style.display = 'flex';
+                                loginBtn.innerHTML = '<i class="fa-solid fa-arrow-up-from-bracket text-xs"></i> <span class="hidden sm:inline">UPGRADE</span>';
+                                loginBtn.className = "flex items-center gap-1 bg-gradient-to-r from-amber-500 to-yellow-500 text-black px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl text-xs font-black hover:brightness-110 transition-all glow-gold cursor-pointer flex-shrink-0";
+                            } else {
+                                loginBtn.style.display = 'none';
                             }
-                            var logoutBtn = document.getElementById("header-logout-btn");
-                            if (logoutBtn) logoutBtn.style.display = 'flex';
                         }
+                        var logoutBtn = document.getElementById("header-logout-btn");
+                        if (logoutBtn) logoutBtn.style.display = 'flex';
+                        var adminBtn = document.getElementById("header-admin-btn");
+                        if (adminBtn && isAdmin) adminBtn.style.display = 'flex';
                     }
                 }
             } catch(e) {}
@@ -1014,22 +1007,20 @@
                         var role = (u.role || '').toUpperCase();
                         var uname = (u.username || '').toLowerCase();
                         var isAdmin = (role === 'ADMIN' || role === 'SUPERADMIN' || role === 'CO_ADMIN' || uname === 'wolfy' || uname === 'admin');
-                        if (!isAdmin) {
-                            var avatar = u.avatar_url || ("https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(u.username || 'nexus_player'));
-                            var sbAvatar = document.getElementById("sidebar-user-avatar");
-                            if (sbAvatar) sbAvatar.src = avatar;
-                            var sbName = document.getElementById("sidebar-user-name");
-                            if (sbName) sbName.textContent = u.username || 'Gamer';
-                            var sbRole = document.getElementById("sidebar-user-role");
-                            if (sbRole) sbRole.textContent = u.custom_title || (u.is_guest ? 'GUEST PASS' : (u.role || 'PRO GAMER'));
+                        var avatar = u.avatar_url || ("https://api.dicebear.com/7.x/bottts/svg?seed=" + encodeURIComponent(u.username || 'nexus_player'));
+                        var sbAvatar = document.getElementById("sidebar-user-avatar");
+                        if (sbAvatar) sbAvatar.src = avatar;
+                        var sbName = document.getElementById("sidebar-user-name");
+                        if (sbName) sbName.textContent = u.username || 'Gamer';
+                        var sbRole = document.getElementById("sidebar-user-role");
+                        if (sbRole) sbRole.textContent = u.custom_title || (u.is_guest ? 'GUEST PASS' : (isAdmin ? 'ADMINISTRATOR' : (u.role || 'PRO GAMER')));
 
-                            var mobAvatar = document.getElementById("mobile-user-avatar");
-                            if (mobAvatar) mobAvatar.src = avatar;
-                            var mobName = document.getElementById("mobile-user-name");
-                            if (mobName) mobName.textContent = u.username || 'Gamer';
-                            var mobRole = document.getElementById("mobile-user-role");
-                            if (mobRole) mobRole.textContent = u.custom_title || (u.is_guest ? 'GUEST PASS' : (u.role || 'PRO GAMER'));
-                        }
+                        var mobAvatar = document.getElementById("mobile-user-avatar");
+                        if (mobAvatar) mobAvatar.src = avatar;
+                        var mobName = document.getElementById("mobile-user-name");
+                        if (mobName) mobName.textContent = u.username || 'Gamer';
+                        var mobRole = document.getElementById("mobile-user-role");
+                        if (mobRole) mobRole.textContent = u.custom_title || (u.is_guest ? 'GUEST PASS' : (isAdmin ? 'ADMINISTRATOR' : (u.role || 'PRO GAMER')));
                     }
                 }
             } catch(e) {}

@@ -454,6 +454,8 @@ def verify_account(req: VerifyAccountRequest, response: Response):
         if not user:
             raise HTTPException(status_code=404, detail="User account not found.")
 
+        user = dict(user)
+
         token = create_jwt_token({
             "sub": user["id"],
             "username": user["username"],
@@ -482,7 +484,14 @@ def verify_account(req: VerifyAccountRequest, response: Response):
                 "avatar_url": user["avatar_url"],
                 "two_factor_enabled": bool(user["two_factor_enabled"]),
                 "phone_verified": bool(user["phone_verified"]),
-                "elo_rating": user["elo_rating"]
+                "elo_rating": user["elo_rating"],
+                "bio": user.get("bio") or "",
+                "primary_game": user.get("primary_game") or "Valorant",
+                "in_game_name": user.get("in_game_name") or user["username"],
+                "character_uid": user.get("character_uid") or "",
+                "clan_name": user.get("clan_name") or "",
+                "gaming_rig": user.get("gaming_rig") or "",
+                "gamer_tags": user.get("gamer_tags") or ""
             }
         }
     finally:
@@ -779,7 +788,14 @@ def login_user(req: UserLoginRequest, request: Request, response: Response):
                 "avatar_url": user["avatar_url"],
                 "two_factor_enabled": bool(user["two_factor_enabled"]),
                 "phone_verified": bool(user["phone_verified"]),
-                "elo_rating": user["elo_rating"]
+                "elo_rating": user["elo_rating"],
+                "bio": user.get("bio") or "",
+                "primary_game": user.get("primary_game") or "Valorant",
+                "in_game_name": user.get("in_game_name") or user["username"],
+                "character_uid": user.get("character_uid") or "",
+                "clan_name": user.get("clan_name") or "",
+                "gaming_rig": user.get("gaming_rig") or "",
+                "gamer_tags": user.get("gamer_tags") or ""
             }
         }
     finally:
@@ -819,7 +835,14 @@ def get_user_profile(user: Dict[str, Any] = Depends(get_current_user)):
                 "matches_won": user["matches_won"],
                 "nexus_coins": user.get("nexus_coins") if user.get("nexus_coins") is not None else 2450,
                 "referral_code": user.get("referral_code") or "WOLFY_PRO",
-                "daily_streak": user.get("daily_streak") if user.get("daily_streak") is not None else 4
+                "daily_streak": user.get("daily_streak") if user.get("daily_streak") is not None else 4,
+                "bio": user.get("bio") or "",
+                "primary_game": user.get("primary_game") or "Valorant",
+                "in_game_name": user.get("in_game_name") or user["username"],
+                "character_uid": user.get("character_uid") or "",
+                "clan_name": user.get("clan_name") or "",
+                "gaming_rig": user.get("gaming_rig") or "",
+                "gamer_tags": user.get("gamer_tags") or ""
             },
             "wallet": {
                 "balance": balance_cents / 100.0,
@@ -998,6 +1021,34 @@ def update_user_profile(req: UserProfileUpdateRequest, user: Dict[str, Any] = De
             updates.append("avatar_url = ?")
             params.append(req.avatar_url.strip())
 
+        if req.bio is not None:
+            updates.append("bio = ?")
+            params.append(req.bio.strip())
+
+        if req.primary_game is not None:
+            updates.append("primary_game = ?")
+            params.append(req.primary_game.strip())
+
+        if req.in_game_name is not None:
+            updates.append("in_game_name = ?")
+            params.append(req.in_game_name.strip())
+
+        if req.character_uid is not None:
+            updates.append("character_uid = ?")
+            params.append(req.character_uid.strip())
+
+        if req.clan_name is not None:
+            updates.append("clan_name = ?")
+            params.append(req.clan_name.strip())
+
+        if req.gaming_rig is not None:
+            updates.append("gaming_rig = ?")
+            params.append(req.gaming_rig.strip())
+
+        if req.gamer_tags is not None:
+            updates.append("gamer_tags = ?")
+            params.append(req.gamer_tags.strip())
+
         if req.new_password:
             valid, msg = validate_strong_password(req.new_password)
             if not valid:
@@ -1021,9 +1072,31 @@ def update_user_profile(req: UserProfileUpdateRequest, user: Dict[str, Any] = De
             logger.warning(f"[SECURITY_ALERT] Critical profile update executed for {user['username']}. Alert sent to {old_email}.")
 
         conn.commit()
+
+        cursor.execute("SELECT * FROM users WHERE id = ?", (user["id"],))
+        updated_row = cursor.fetchone()
+        updated_dict = dict(updated_row) if updated_row else {}
+        updated_dict.pop("password_hash", None)
+        updated_dict.pop("two_factor_secret", None)
+
+        # If admin/superadmin updated their avatar, also persist to backup lockfile so reboots never revert
+        if user.get("role") in ("ADMIN", "SUPERADMIN") and req.avatar_url:
+            try:
+                import json
+                s_creds = {}
+                if ADMIN_CREDENTIALS_BACKUP_PATH.exists():
+                    s_creds = json.loads(ADMIN_CREDENTIALS_BACKUP_PATH.read_text(encoding="utf-8"))
+                s_creds["avatar_url"] = req.avatar_url.strip()
+                s_creds["username"] = updated_dict.get("username", s_creds.get("username", "admin"))
+                ADMIN_CREDENTIALS_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
+                ADMIN_CREDENTIALS_BACKUP_PATH.write_text(json.dumps(s_creds, indent=2), encoding="utf-8")
+            except Exception as e:
+                logger.warning(f"Could not persist admin avatar in backup lockfile: {e}")
+
         return {
             "status": "SUCCESS",
-            "message": "Profile updated successfully! Security confirmation dispatched to your registered address."
+            "message": "Profile updated successfully!",
+            "user": updated_dict
         }
     finally:
         conn.close()
@@ -3591,6 +3664,7 @@ def update_admin_credentials_route(
                 "username": updated_username,
                 "email": user["email"],
                 "password_hash": new_hash if (req.new_password and req.new_password.strip()) else user["password_hash"],
+                "avatar_url": user.get("avatar_url"),
                 "updated_at": now_iso
             }, indent=2), encoding="utf-8")
         except Exception as write_err:

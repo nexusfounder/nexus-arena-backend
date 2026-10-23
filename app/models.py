@@ -39,6 +39,13 @@ class UserProfileUpdateRequest(BaseModel):
     new_password: Optional[str] = None
     current_password: Optional[str] = None  # Mandatory step-up auth for password/email updates
     two_factor_code: Optional[str] = None  # Mandatory step-up 2FA code if 2FA is enabled
+    bio: Optional[str] = None
+    primary_game: Optional[str] = None
+    in_game_name: Optional[str] = None
+    character_uid: Optional[str] = None
+    clan_name: Optional[str] = None
+    gaming_rig: Optional[str] = None
+    gamer_tags: Optional[str] = None
 
     @field_validator("new_password")
     @classmethod
