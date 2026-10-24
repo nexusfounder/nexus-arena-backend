@@ -931,9 +931,16 @@ async function fetchFreshUserProfile() {
         if (res.ok) {
             const data = await res.json();
             if (data && data.user) {
+                // If local user has a custom base64 photo and backend returned default dicebear seed, preserve custom!
+                const backendAvatar = data.user.avatar_url;
+                const isCustomLocal = state.user.avatar_url && (state.user.avatar_url.startsWith("data:") || state.user.avatar_url.includes("Custom"));
+                const isDefaultBackend = !backendAvatar || backendAvatar.includes("seed=");
+                const finalAvatar = (isCustomLocal && isDefaultBackend) ? state.user.avatar_url : (backendAvatar || state.user.avatar_url);
+
                 state.user = {
                     ...state.user,
-                    ...data.user
+                    ...data.user,
+                    avatar_url: finalAvatar
                 };
                 if (data.wallet && data.wallet.balance !== undefined) {
                     state.walletBalance = Number(data.wallet.balance);
@@ -5539,9 +5546,10 @@ async function saveUserProfileAvatar() {
         }
     }
 
-    // Also sync to Firebase Realtime Database if configured
+    // Also sync to Firebase Realtime Database cloud sync (permanent persistence)
     try {
         if (typeof firebase !== 'undefined' && firebase.database && state.user && state.user.id) {
+            firebase.database().ref("cloud_sync/users/" + state.user.id + "/avatar_url").set(newAvatar);
             firebase.database().ref("users/" + state.user.id + "/avatar_url").set(newAvatar);
         }
     } catch(fbErr) {}
@@ -5695,6 +5703,21 @@ async function handleSaveBioAndFolio(e) {
             console.warn("[Folio Sync] Backend update network notice:", netErr);
         }
     }
+
+    // Also sync folio to Firebase Realtime Database cloud sync
+    try {
+        if (typeof firebase !== 'undefined' && firebase.database && state.user && state.user.id) {
+            firebase.database().ref("cloud_sync/users/" + state.user.id).update({
+                bio: state.user.bio,
+                primary_game: state.user.primary_game,
+                in_game_name: state.user.in_game_name,
+                character_uid: state.user.character_uid,
+                clan_name: state.user.clan_name,
+                gaming_rig: state.user.gaming_rig,
+                gamer_tags: state.user.gamer_tags
+            });
+        }
+    } catch(fbErr) {}
 
     updateHeaderProfile();
     closeModal("modal-edit-bio");
@@ -6356,11 +6379,17 @@ async function handleRegisterWithOTP(e) {
             })
         });
         const contentType = regRes.headers.get("content-type") || "";
-        if (regRes.ok && contentType.includes("application/json")) {
+        if (contentType.includes("application/json")) {
             const regData = await regRes.json().catch(() => ({}));
-            if (regData.requires_verification || regData.status === "VERIFICATION_SENT") {
-                openAccountVerificationModal(email);
-                showToast("📬 " + regData.message, "info");
+            if (regRes.ok) {
+                if (regData.requires_verification || regData.status === "VERIFICATION_SENT") {
+                    openAccountVerificationModal(email, regData.demo_otp || "");
+                    showToast("📬 " + regData.message, "info");
+                    return;
+                }
+            } else {
+                if (typeof playCyberSound === 'function') playCyberSound('error');
+                showToast("❌ " + (regData.detail || "Registration failed. Please check your credentials."), "error");
                 return;
             }
         }
@@ -6435,7 +6464,7 @@ function openAccountVerificationModal(email, demoOtp = "") {
     const otpInput = document.getElementById("activation-otp-input");
 
     if (emailEl) emailEl.textContent = `Enter the 6-digit code sent to ${email || 'your email'} to activate your account.`;
-    if (otpInput) otpInput.value = "";
+    if (otpInput) otpInput.value = demoOtp || "";
 
     if (demoOtp && demoBadge && demoCodeEl) {
         demoBadge.classList.remove("hidden");

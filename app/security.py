@@ -41,25 +41,16 @@ COMMON_PASSWORDS_BLACKLIST = {
 
 def validate_strong_password(password: str) -> Tuple[bool, str]:
     """
-    Phase 1 Rule: Enforces mandatory strong password rules.
-    - Minimum length of 12 characters.
-    - Mix of uppercase, lowercase, numbers, and special symbols.
-    - Rejects common dictionary / guessable passwords.
+    Validates user password strength.
+    - Minimum length of 6 characters.
+    - Rejects obvious dictionary / guessable passwords.
     """
-    if not password or len(password) < 12:
-        return False, "Password must be at least 12 characters long."
-    if not re.search(r"[A-Z]", password):
-        return False, "Password must include at least one uppercase letter (A-Z)."
-    if not re.search(r"[a-z]", password):
-        return False, "Password must include at least one lowercase letter (a-z)."
-    if not re.search(r"[0-9]", password):
-        return False, "Password must include at least one numeric digit (0-9)."
-    if not re.search(r"[!@#$%^&*()_+\-=\[\]{}|;:,.<>?/]", password):
-        return False, "Password must include at least one special symbol (!@#$%^&*...)."
-    pw_lower = password.lower()
-    if pw_lower in COMMON_PASSWORDS_BLACKLIST or any(bad in pw_lower for bad in ["password123", "admin123", "qwerty123", "12345678", "letmein123"]):
+    if not password or len(password) < 6:
+        return False, "Password must be at least 6 characters long."
+    pw_lower = password.lower().strip()
+    if pw_lower in COMMON_PASSWORDS_BLACKLIST or any(bad == pw_lower for bad in ["password", "123456", "qwerty", "letmein"]):
         return False, "This password is too common or easily guessable. Please choose a more unique passphrase."
-    return True, "Password meets all enterprise security criteria."
+    return True, "Password meets security criteria."
 
 def hash_password(password: str) -> str:
     """Hashes a password using Argon2id (gold standard) or PBKDF2-HMAC-SHA256."""

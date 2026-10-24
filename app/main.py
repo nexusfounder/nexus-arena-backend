@@ -386,6 +386,16 @@ def register_user(req: UserRegisterRequest, request: Request, response: Response
         conn.commit()
         logger.info(f"[VERIFICATION_WALL] User registered: {req.username} ({req.email}). Verification OTP: {verification_otp}")
 
+        # Synchronize new user to Firebase Realtime Database cloud sync immediately
+        try:
+            from .cloud_sync import cloud_sync_user
+            cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+            created_row = cursor.fetchone()
+            if created_row:
+                cloud_sync_user(dict(created_row))
+        except Exception as cs_err:
+            logger.warning(f"[CloudSync] Registration cloud sync notice: {cs_err}")
+
         is_sandbox_telecom = not bool(os.environ.get("FAST2SMS_API_KEY") or os.environ.get("SMTP_HOST"))
         return {
             "status": "VERIFICATION_SENT",
@@ -471,6 +481,13 @@ def verify_account(req: VerifyAccountRequest, response: Response):
             secure=True,
             max_age=86400
         )
+
+        # Synchronize activated user state to Firebase Realtime Database
+        try:
+            from .cloud_sync import cloud_sync_user
+            cloud_sync_user(user)
+        except Exception as cs_err:
+            logger.warning(f"[CloudSync] Verify account cloud sync notice: {cs_err}")
 
         return {
             "status": "SUCCESS",
@@ -1092,6 +1109,15 @@ def update_user_profile(req: UserProfileUpdateRequest, user: Dict[str, Any] = De
                 ADMIN_CREDENTIALS_BACKUP_PATH.write_text(json.dumps(s_creds, indent=2), encoding="utf-8")
             except Exception as e:
                 logger.warning(f"Could not persist admin avatar in backup lockfile: {e}")
+
+        # Synchronize updated profile & avatar to Firebase Realtime Database
+        try:
+            from .cloud_sync import cloud_sync_user, cloud_sync_admin
+            cloud_sync_user(updated_dict)
+            if user.get("role") in ("ADMIN", "SUPERADMIN") and req.avatar_url:
+                cloud_sync_admin(s_creds)
+        except Exception as cs_err:
+            logger.warning(f"[CloudSync] Profile update cloud sync notice: {cs_err}")
 
         return {
             "status": "SUCCESS",
@@ -3659,14 +3685,19 @@ def update_admin_credentials_route(
 
         # Persist updated admin credentials to disk backup so restarts never revert
         try:
-            ADMIN_CREDENTIALS_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
-            ADMIN_CREDENTIALS_BACKUP_PATH.write_text(json.dumps({
+            admin_backup_payload = {
                 "username": updated_username,
                 "email": user["email"],
                 "password_hash": new_hash if (req.new_password and req.new_password.strip()) else user["password_hash"],
                 "avatar_url": user.get("avatar_url"),
                 "updated_at": now_iso
-            }, indent=2), encoding="utf-8")
+            }
+            ADMIN_CREDENTIALS_BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
+            ADMIN_CREDENTIALS_BACKUP_PATH.write_text(json.dumps(admin_backup_payload, indent=2), encoding="utf-8")
+
+            # Also synchronize admin credentials to Firebase Realtime Database cloud sync
+            from .cloud_sync import cloud_sync_admin
+            cloud_sync_admin(admin_backup_payload)
         except Exception as write_err:
             logger.warning(f"Could not persist admin credentials backup: {write_err}")
 

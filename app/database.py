@@ -744,6 +744,21 @@ def init_db():
             pass
 
     conn.commit()
+
+    # Synchronize persistent cloud state from Firebase RTDB (guards against ephemeral container wipes on Render)
+    try:
+        from .cloud_sync import restore_cloud_state_to_db, cloud_sync_admin
+        restore_cloud_state_to_db(conn)
+        
+        # Ensure current admin state is also synced to cloud
+        cursor = conn.cursor()
+        cursor.execute("SELECT username, email, password_hash, avatar_url FROM users WHERE role IN ('ADMIN', 'SUPERADMIN') LIMIT 1")
+        cur_adm = cursor.fetchone()
+        if cur_adm:
+            cloud_sync_admin(dict(cur_adm))
+    except Exception as cs_err:
+        logger.warning(f"[CloudSync] Startup sync notice: {cs_err}")
+
     conn.close()
 
 if __name__ == "__main__":

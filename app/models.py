@@ -5,7 +5,7 @@ from typing import Optional, List, Dict, Any
 class UserRegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=32)
     email: str = Field(...)
-    password: str = Field(..., min_length=12)
+    password: str = Field(..., min_length=6)
     phone_number: Optional[str] = None
     bot_token: Optional[str] = None
 
@@ -83,7 +83,7 @@ class VerifyOTPRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     account_identifier: str = Field(..., min_length=3)
     otp_code: str = Field(..., min_length=4)
-    new_password: str = Field(..., min_length=12)
+    new_password: str = Field(..., min_length=6)
     authenticator_code: Optional[str] = None  # Google Authenticator TOTP or Master Recovery Key
 
     @field_validator("new_password")
