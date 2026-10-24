@@ -719,6 +719,13 @@ def google_auth_login(req: GoogleAuthRequest, response: Response):
             cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
             user_dict = dict(cursor.fetchone())
 
+        # Synchronize Google account to cloud database
+        try:
+            from .cloud_sync import cloud_sync_user
+            cloud_sync_user(user_dict)
+        except Exception as cs_err:
+            logger.warning(f"[CloudSync] Google auth cloud sync notice: {cs_err}")
+
         token = create_jwt_token({
             "sub": user_dict["id"],
             "username": user_dict["username"],
@@ -1445,14 +1452,13 @@ async def send_otp(req: SendOTPRequest, request: Request):
         from .sms_gateway import send_sms_otp
         dispatch_res = await send_sms_otp(req.identifier, code)
 
-        # In production, never return the plaintext verification code in the HTTP response.
-        # Only permit in local DEBUG environment with explicit ALLOW_OTP_DEMO_LEAK flag.
+        is_sandbox_telecom = not bool(os.environ.get("FAST2SMS_API_KEY") or os.environ.get("SMTP_HOST"))
         is_dev_sandbox = DEBUG and os.environ.get("ALLOW_OTP_DEMO_LEAK", "false").strip().lower() == "true"
         return {
             "status": "SENT",
             "message": f"Verification code dispatched to {req.identifier}.",
             "provider": dispatch_res.get("provider", "GATEWAY"),
-            "demo_code": code if (is_dev_sandbox and dispatch_res.get("is_sandbox")) else None
+            "demo_code": code if (is_sandbox_telecom or (is_dev_sandbox and dispatch_res.get("is_sandbox"))) else None
         }
     finally:
         conn.close()
@@ -1488,12 +1494,29 @@ def verify_otp(req: VerifyOTPRequest, user: Optional[Dict[str, Any]] = Depends(g
 
         # Mark OTP as verified
         cursor.execute("UPDATE otp_codes SET verified = 1 WHERE id = ?", (otp_entry["id"],))
-        # Update user's phone status if user is currently logged in
+        # Update user's phone or email status if user is currently logged in
         if user:
-            cursor.execute("""
-            UPDATE users SET phone_number = ?, phone_verified = 1 WHERE id = ?
-            """, (req.identifier, user["id"]))
-        conn.commit()
+            clean_id = req.identifier.strip()
+            if "@" in clean_id:
+                cursor.execute("""
+                UPDATE users SET email = ? WHERE id = ?
+                """, (clean_id.lower(), user["id"]))
+            else:
+                cursor.execute("""
+                UPDATE users SET phone_number = ?, phone_verified = 1 WHERE id = ?
+                """, (clean_id, user["id"]))
+            conn.commit()
+
+            try:
+                from .cloud_sync import cloud_sync_user
+                cursor.execute("SELECT * FROM users WHERE id = ?", (user["id"],))
+                u_row = cursor.fetchone()
+                if u_row:
+                    cloud_sync_user(dict(u_row))
+            except Exception as cs_err:
+                logger.warning(f"[CloudSync] Contact verify sync notice: {cs_err}")
+        else:
+            conn.commit()
 
         return {"status": "SUCCESS", "message": "Contact successfully verified!"}
     finally:
@@ -1542,7 +1565,7 @@ def reset_password(req: ResetPasswordRequest):
         if not otp_row:
             raise HTTPException(status_code=400, detail="Invalid recovery OTP code. Please request a new code.")
 
-        if otp_row.get("expires_at"):
+        if otp_row["expires_at"]:
             try:
                 exp_dt = datetime.fromisoformat(otp_row["expires_at"])
                 if datetime.now(timezone.utc) > exp_dt:

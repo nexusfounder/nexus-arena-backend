@@ -15033,3 +15033,166 @@ async function verifyAndEnableOTP2FA() {
 }
 window.verifyAndEnableOTP2FA = verifyAndEnableOTP2FA;
 
+
+
+// ============================================================
+// CONTACT UPDATE VIA OTP VERIFICATION
+// ============================================================
+
+function openUpdateContactModal() {
+    if (typeof playCyberSound === 'function') playCyberSound('click');
+    const inputVal = document.getElementById("inp-update-contact-val");
+    if (inputVal && state.user) {
+        inputVal.value = state.user.phone_number || state.user.phone || "";
+    }
+    const statusEl = document.getElementById("contact-update-otp-status");
+    if (statusEl) statusEl.innerHTML = "";
+    const demoEl = document.getElementById("contact-update-demo-chip");
+    if (demoEl) demoEl.classList.add("hidden");
+    const otpInput = document.getElementById("inp-update-contact-otp");
+    if (otpInput) otpInput.value = "";
+    openModal("modal-update-contact");
+}
+window.openUpdateContactModal = openUpdateContactModal;
+
+function switchContactTypeInput(type) {
+    const lbl = document.getElementById("lbl-update-contact-val");
+    const inp = document.getElementById("inp-update-contact-val");
+    if (!lbl || !inp) return;
+    if (type === "email") {
+        lbl.textContent = "New Email Address";
+        inp.placeholder = "gamer@example.com";
+        inp.type = "email";
+        if (state.user && state.user.email) inp.value = state.user.email;
+    } else {
+        lbl.textContent = "New Mobile Number";
+        inp.placeholder = "+91 9876543210";
+        inp.type = "text";
+        if (state.user && (state.user.phone_number || state.user.phone)) inp.value = state.user.phone_number || state.user.phone;
+    }
+}
+window.switchContactTypeInput = switchContactTypeInput;
+
+async function sendContactUpdateOTP() {
+    if (typeof playCyberSound === 'function') playCyberSound('click');
+    const val = (document.getElementById("inp-update-contact-val")?.value || "").trim();
+    if (!val) {
+        showToast("Please enter a mobile number or email address", "error");
+        return;
+    }
+    const btn = document.getElementById("btn-send-contact-otp");
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Sending...";
+    }
+    const statusEl = document.getElementById("contact-update-otp-status");
+    const isEmail = val.includes("@");
+    try {
+        const res = await fetch("/api/auth/otp/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                identifier: val,
+                otp_type: isEmail ? "EMAIL" : "PHONE"
+            })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            if (statusEl) {
+                statusEl.innerHTML = `<span class="text-green-400">✓ OTP dispatched to ${escapeHtml(val)}. Valid for 5 minutes.</span>`;
+            }
+            showToast(`📲 Verification OTP dispatched to ${val}!`, "success");
+            const demoEl = document.getElementById("contact-update-demo-chip");
+            const otpInp = document.getElementById("inp-update-contact-otp");
+            if (data.demo_code && demoEl) {
+                demoEl.innerHTML = `<span onclick="document.getElementById('inp-update-contact-otp').value='${data.demo_code}'" class="cursor-pointer text-[10px] text-amber-300 font-mono bg-amber-500/20 px-2.5 py-1 rounded border border-amber-500/40 hover:bg-amber-500/30">Demo OTP: <strong>${data.demo_code}</strong> (Click to fill)</span>`;
+                demoEl.classList.remove("hidden");
+                if (otpInp) otpInp.value = data.demo_code;
+            }
+        } else {
+            showToast(data.detail || "Failed to dispatch OTP.", "error");
+        }
+    } catch(e) {
+        showToast("Network error dispatching OTP.", "error");
+    } finally {
+        if (btn) {
+            let countdown = 30;
+            const timer = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    btn.innerText = `Resend (${countdown}s)`;
+                } else {
+                    clearInterval(timer);
+                    btn.innerText = "Send OTP";
+                    btn.disabled = false;
+                }
+            }, 1000);
+        }
+    }
+}
+window.sendContactUpdateOTP = sendContactUpdateOTP;
+
+async function handleVerifyAndSaveContact(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (typeof playCyberSound === 'function') playCyberSound('click');
+    const val = (document.getElementById("inp-update-contact-val")?.value || "").trim();
+    const code = (document.getElementById("inp-update-contact-otp")?.value || "").trim();
+    const btn = document.getElementById("btn-submit-contact-update");
+
+    if (!val || !code) {
+        showToast("Please enter both the contact value and 6-digit OTP", "error");
+        return;
+    }
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying...`;
+    }
+
+    const headers = { "Content-Type": "application/json" };
+    if (state.token) headers["Authorization"] = "Bearer " + state.token;
+
+    try {
+        const res = await fetch("/api/auth/otp/verify", {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ identifier: val, code: code })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            if (typeof playCyberSound === 'function') playCyberSound('success');
+            showToast("🎉 Contact details verified & saved successfully!", "success");
+
+            if (state.user) {
+                if (val.includes("@")) {
+                    state.user.email = val;
+                } else {
+                    state.user.phone_number = val;
+                    state.user.phone = val;
+                    state.user.phone_verified = true;
+                }
+                try { localStorage.setItem("nexus_user", JSON.stringify(state.user)); } catch (e) {}
+            }
+
+            const pill = document.getElementById("phone-verified-pill");
+            if (pill) {
+                pill.textContent = "Verified";
+                pill.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-500/20 text-green-400 border border-green-500/40";
+            }
+
+            closeModal("modal-update-contact");
+            if (typeof updateHeaderProfile === 'function') updateHeaderProfile();
+        } else {
+            if (typeof playCyberSound === 'function') playCyberSound('error');
+            showToast(data.detail || "Invalid or expired OTP code.", "error");
+        }
+    } catch(e) {
+        showToast("Network error verifying contact OTP.", "error");
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `Verify &amp; Save Contact`;
+        }
+    }
+}
+window.handleVerifyAndSaveContact = handleVerifyAndSaveContact;
