@@ -5052,6 +5052,12 @@
                     Staging OTP: <span id="activation-demo-code" class="font-bold"></span>
                     <button type="button" onclick="autoFillActivationOTP()" class="ml-2 underline text-white font-bold">Auto-Fill</button>
                 </div>
+                <div class="flex items-center justify-between text-xs pt-1">
+                    <span class="text-gray-400">Didn't receive code?</span>
+                    <button type="button" id="btn-resend-activation-otp" onclick="resendAccountActivationOTP()" class="text-cyan-400 hover:underline font-bold cursor-pointer">
+                        Resend Code
+                    </button>
+                </div>
             </div>
             <button onclick="submitAccountActivation()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-black font-black hover:brightness-110 transition-all glow-cyan btn-sweep cursor-pointer">
                 Verify Code &bull; Enter Arena
@@ -5218,6 +5224,30 @@
         </div>
     </div>
 
+    <!-- 2FA OTP Verification Setup Modal -->
+    <div id="modal-2fa-otp-setup" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4 overflow-y-auto" onclick="if(event.target === this) closeModal('modal-2fa-otp-setup')">
+        <div class="bg-cyber-card border border-cyan-500/40 w-full max-w-md rounded-3xl p-6 sm:p-8 space-y-5 relative glow-cyan text-center tactical-cut my-6 shadow-2xl">
+            <button onclick="closeModal('modal-2fa-otp-setup')" class="modal-close-btn absolute top-6 right-6 text-gray-400 hover:text-white" title="Close (Esc)" aria-label="Close modal"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <div class="w-14 h-14 bg-cyan-500/10 border border-cyan-500/40 rounded-2xl flex items-center justify-center mx-auto text-cyan-400 text-xl glow-cyan">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+            </div>
+            <div class="space-y-1">
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">
+                    <i class="fa-solid fa-shield-halved text-cyan-400 mr-1"></i> SMS &amp; EMAIL 2FA
+                </span>
+                <h3 class="font-orbitron font-black text-2xl text-white">Enable 2FA via OTP</h3>
+                <p class="text-xs text-gray-400">A dynamic 6-digit security code was dispatched to <strong id="otp-2fa-contact-display" class="text-cyan-300">your registered contact</strong>.</p>
+            </div>
+            <div class="space-y-2">
+                <input type="text" id="otp-2fa-verify-code" maxlength="6" placeholder="Enter 6-digit OTP" class="w-full bg-cyber-dark border border-cyan-500/50 rounded-xl px-4 py-3 text-center font-mono text-xl font-bold tracking-widest text-cyan-400 focus:outline-none focus:border-cyan-400">
+                <div id="otp-2fa-demo-chip" class="hidden text-[11px] font-mono p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300"></div>
+            </div>
+            <button onclick="verifyAndEnableOTP2FA()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-600 text-black font-black hover:brightness-110 transition-all glow-cyan btn-sweep shadow-xl cursor-pointer">
+                Verify OTP &bull; Activate 2FA Protection
+            </button>
+        </div>
+    </div>
+
     <!-- Match Score Report Modal -->
     <div id="modal-report-score" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden items-center justify-center p-4" onclick="if(event.target === this) closeModal('modal-report-score')">
         <div class="bg-cyber-card border border-cyber-border w-full max-w-md rounded-3xl p-6 sm:p-8 space-y-6 relative glow-cyan tactical-cut">
@@ -5337,9 +5367,18 @@
                         </div>
                     </div>
 
-                    <div id="login-2fa-container" class="space-y-1.5 hidden">
-                        <label class="text-xs font-bold text-cyan-400">2FA Authenticator Code</label>
-                        <input type="text" id="login-2fa-code" maxlength="6" placeholder="000000" class="w-full bg-cyber-dark border border-cyan-500/50 rounded-xl px-4 py-2.5 text-sm text-center font-mono text-cyan-400 focus:outline-none">
+                    <div id="login-2fa-container" class="p-3.5 rounded-2xl bg-cyber-dark/95 border border-cyan-500/50 space-y-2 shadow-lg hidden">
+                        <div class="flex items-center justify-between text-xs">
+                            <span id="login-2fa-label" class="font-bold text-cyan-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-mobile-screen text-cyan-400"></i> Two-Factor Authentication (2FA)
+                            </span>
+                            <button type="button" id="btn-resend-login-2fa" onclick="resendLogin2FAOTP()" class="text-[11px] font-bold text-amber-400 hover:underline cursor-pointer">
+                                Resend OTP
+                            </button>
+                        </div>
+                        <input type="text" id="login-2fa-code" maxlength="24" placeholder="Enter 6-digit OTP or Authenticator code" class="w-full bg-cyber-card border border-cyan-500/40 rounded-xl px-4 py-2.5 text-sm text-center font-mono tracking-widest text-cyan-400 focus:outline-none focus:border-cyan-400 uppercase">
+                        <div id="login-2fa-demo-chip" class="hidden text-center"></div>
+                        <p class="text-[10px] text-gray-400 font-mono text-center">Enter your live 6-digit code or Emergency Backup Key.</p>
                     </div>
 
                     <!-- Remember Me Checkbox -->

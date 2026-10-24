@@ -15,35 +15,39 @@ logger = logging.getLogger("nexus.cloud_sync")
 FIREBASE_RTDB_URL = "https://nexus-gaming-arena-28be9-default-rtdb.firebaseio.com/cloud_sync"
 
 def cloud_put(path: str, data: Any) -> bool:
-    """Executes an atomic PUT to Firebase Realtime Database cloud sync."""
+    """Executes an atomic PUT to Firebase Realtime Database cloud sync with retry."""
     url = f"{FIREBASE_RTDB_URL}/{path.strip('/')}.json"
-    try:
-        payload = json.dumps(data).encode("utf-8")
-        req = urllib.request.Request(
-            url,
-            data=payload,
-            method="PUT",
-            headers={"Content-Type": "application/json"}
-        )
-        with urllib.request.urlopen(req, timeout=8) as res:
-            return res.status in (200, 204)
-    except Exception as e:
-        logger.warning(f"[CloudSync] PUT error at {path}: {e}")
-        return False
+    payload = json.dumps(data).encode("utf-8")
+    for attempt in range(2):
+        try:
+            req = urllib.request.Request(
+                url,
+                data=payload,
+                method="PUT",
+                headers={"Content-Type": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=10) as res:
+                return res.status in (200, 204)
+        except Exception as e:
+            if attempt == 1:
+                logger.warning(f"[CloudSync] PUT error at {path}: {e}")
+    return False
 
 def cloud_get(path: str) -> Optional[Any]:
-    """Retrieves data from Firebase Realtime Database cloud sync."""
+    """Retrieves data from Firebase Realtime Database cloud sync with retry."""
     url = f"{FIREBASE_RTDB_URL}/{path.strip('/')}.json"
-    try:
-        req = urllib.request.Request(url, headers={"Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=8) as res:
-            raw = res.read()
-            if not raw or raw == b"null":
-                return None
-            return json.loads(raw)
-    except Exception as e:
-        logger.warning(f"[CloudSync] GET error at {path}: {e}")
-        return None
+    for attempt in range(2):
+        try:
+            req = urllib.request.Request(url, headers={"Accept": "application/json"})
+            with urllib.request.urlopen(req, timeout=10) as res:
+                raw = res.read()
+                if not raw or raw == b"null":
+                    return None
+                return json.loads(raw)
+        except Exception as e:
+            if attempt == 1:
+                logger.warning(f"[CloudSync] GET error at {path}: {e}")
+    return None
 
 def cloud_sync_user(user_dict: Dict[str, Any]) -> bool:
     """Synchronizes a user profile to the cloud database."""
@@ -68,6 +72,7 @@ def cloud_sync_user(user_dict: Dict[str, Any]) -> bool:
         "phone_number": u.get("phone_number"),
         "phone_verified": int(bool(u.get("phone_verified"))),
         "two_factor_enabled": int(bool(u.get("two_factor_enabled"))),
+        "two_factor_method": u.get("two_factor_method", "OTP"),
         "status": u.get("status", "ACTIVE"),
         "elo_rating": u.get("elo_rating", 1200),
         "nexus_coins": u.get("nexus_coins", 100),
@@ -150,9 +155,9 @@ def restore_cloud_state_to_db(conn) -> int:
                 cursor.execute("""
                 INSERT INTO users (
                     id, username, email, password_hash, role, avatar_url, phone_number,
-                    phone_verified, two_factor_enabled, status, elo_rating, nexus_coins,
+                    phone_verified, two_factor_enabled, two_factor_method, status, elo_rating, nexus_coins,
                     bio, primary_game, in_game_name, character_uid, clan_name, gaming_rig, gamer_tags, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     u.get("id", u_id),
                     u.get("username"),
@@ -163,6 +168,7 @@ def restore_cloud_state_to_db(conn) -> int:
                     u.get("phone_number"),
                     u.get("phone_verified", 1),
                     u.get("two_factor_enabled", 0),
+                    u.get("two_factor_method", "OTP"),
                     u.get("status", "ACTIVE"),
                     u.get("elo_rating", 1200),
                     u.get("nexus_coins", 100),

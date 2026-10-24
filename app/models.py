@@ -7,6 +7,7 @@ class UserRegisterRequest(BaseModel):
     email: str = Field(...)
     password: str = Field(..., min_length=6)
     phone_number: Optional[str] = None
+    otp_code: Optional[str] = None
     bot_token: Optional[str] = None
 
     @field_validator("password")
@@ -30,6 +31,20 @@ class TwoFactorVerifyRequest(BaseModel):
 class TwoFactorDisableRequest(BaseModel):
     current_password: str = Field(...)
     code: str = Field(..., min_length=6, max_length=24)
+
+class TwoFactorOTPSetupRequest(BaseModel):
+    contact: Optional[str] = None
+
+class TwoFactorOTPEnableRequest(BaseModel):
+    code: str = Field(..., min_length=4, max_length=12)
+
+class TwoFactorResendLoginOTPRequest(BaseModel):
+    user_id: Optional[str] = None
+    identifier: Optional[str] = None
+
+class TwoFactorSwitchMethodRequest(BaseModel):
+    method: str = Field(..., pattern="^(OTP|TOTP)$")
+    code: Optional[str] = None
 
 class UserProfileUpdateRequest(BaseModel):
     username: Optional[str] = None

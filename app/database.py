@@ -40,6 +40,7 @@ def init_db():
         phone_verified INTEGER DEFAULT 0,
         two_factor_secret TEXT,
         two_factor_enabled INTEGER DEFAULT 0,
+        two_factor_method TEXT DEFAULT 'OTP',
         discord_tag TEXT,
         steam_id TEXT,
         twitch_channel TEXT,
@@ -377,6 +378,8 @@ def init_db():
         "ALTER TABLE users ADD COLUMN gamer_tags TEXT;",
         "ALTER TABLE users ADD COLUMN status TEXT DEFAULT 'ACTIVE';",
         "ALTER TABLE users ADD COLUMN has_claimed_referral INTEGER DEFAULT 0;",
+        "ALTER TABLE users ADD COLUMN two_factor_method TEXT DEFAULT 'OTP';",
+        "ALTER TABLE user_two_factor_secrets ADD COLUMN two_factor_method TEXT DEFAULT 'OTP';",
         "ALTER TABLE tournaments ADD COLUMN game_mode TEXT DEFAULT 'Squad (TPP)';",
         "ALTER TABLE tournaments ADD COLUMN map_name TEXT DEFAULT 'Erangel';",
         "ALTER TABLE tournaments ADD COLUMN server_region TEXT DEFAULT 'Mumbai AWS';",
@@ -639,6 +642,7 @@ def init_db():
 
     # Ensure Master Admin account exists and load persistent credentials
     from .security import hash_password
+    from .cloud_sync import cloud_get_admin, cloud_sync_admin, restore_cloud_state_to_db
 
     # Check for saved admin credentials from file
     saved_creds = {}
@@ -648,14 +652,21 @@ def init_db():
         except Exception:
             saved_creds = {}
 
+    # Query cloud directly to prevent container wipes on Render
+    cloud_admin = None
+    try:
+        cloud_admin = cloud_get_admin()
+    except Exception as c_err:
+        logger.warning(f"[CloudSync] Notice fetching cloud admin on startup: {c_err}")
+
     env_uname = os.environ.get("ADMIN_USERNAME")
     env_pw = os.environ.get("ADMIN_PASSWORD")
     env_email = os.environ.get("ADMIN_EMAIL")
 
-    desired_uname = env_uname or saved_creds.get("username") or ADMIN_USERNAME or "admin"
-    desired_hash = hash_password(env_pw) if env_pw else (saved_creds.get("password_hash") or hash_password(ADMIN_PASSWORD or "admin"))
-    desired_email = env_email or saved_creds.get("email") or ADMIN_EMAIL or "admin@nexusgamingarena.online"
-    desired_avatar = saved_creds.get("avatar_url") or f"https://api.dicebear.com/7.x/bottts/svg?seed={desired_uname}"
+    desired_uname = env_uname or (cloud_admin.get("username") if cloud_admin else None) or saved_creds.get("username") or ADMIN_USERNAME or "admin"
+    desired_hash = hash_password(env_pw) if env_pw else ((cloud_admin.get("password_hash") if cloud_admin else None) or saved_creds.get("password_hash") or hash_password(ADMIN_PASSWORD or "admin"))
+    desired_email = env_email or (cloud_admin.get("email") if cloud_admin else None) or saved_creds.get("email") or ADMIN_EMAIL or "admin@nexusgamingarena.online"
+    desired_avatar = (cloud_admin.get("avatar_url") if cloud_admin else None) or saved_creds.get("avatar_url") or f"https://api.dicebear.com/7.x/bottts/svg?seed={desired_uname}"
 
     # Query for ANY existing admin or superadmin to prevent accidental overwrite or duplicate admin creation
     cursor.execute("SELECT id, username, email, password_hash, role, avatar_url FROM users WHERE role IN ('ADMIN', 'SUPERADMIN') LIMIT 1")
@@ -747,15 +758,15 @@ def init_db():
 
     # Synchronize persistent cloud state from Firebase RTDB (guards against ephemeral container wipes on Render)
     try:
-        from .cloud_sync import restore_cloud_state_to_db, cloud_sync_admin
         restore_cloud_state_to_db(conn)
         
-        # Ensure current admin state is also synced to cloud
-        cursor = conn.cursor()
-        cursor.execute("SELECT username, email, password_hash, avatar_url FROM users WHERE role IN ('ADMIN', 'SUPERADMIN') LIMIT 1")
-        cur_adm = cursor.fetchone()
-        if cur_adm:
-            cloud_sync_admin(dict(cur_adm))
+        # Ensure current admin state is synced to cloud only if cloud does not already have an admin record
+        if not cloud_admin:
+            cursor = conn.cursor()
+            cursor.execute("SELECT username, email, password_hash, avatar_url FROM users WHERE role IN ('ADMIN', 'SUPERADMIN') LIMIT 1")
+            cur_adm = cursor.fetchone()
+            if cur_adm:
+                cloud_sync_admin(dict(cur_adm))
     except Exception as cs_err:
         logger.warning(f"[CloudSync] Startup sync notice: {cs_err}")
 

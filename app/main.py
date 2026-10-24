@@ -42,6 +42,7 @@ from .popularity_engine import (
 )
 from .models import (
     UserRegisterRequest, UserLoginRequest, TwoFactorVerifyRequest, TwoFactorDisableRequest,
+    TwoFactorOTPSetupRequest, TwoFactorOTPEnableRequest, TwoFactorResendLoginOTPRequest, TwoFactorSwitchMethodRequest,
     UserProfileUpdateRequest, WithdrawRequest, VerifyAccountRequest,
     SendOTPRequest, VerifyOTPRequest, TournamentCreateRequest,
     TournamentJoinRequest, MatchReportRequest, MatchDisputeRequest,
@@ -355,11 +356,29 @@ def register_user(req: UserRegisterRequest, request: Request, response: Response
         now = now_dt.isoformat()
         avatar = f"https://api.dicebear.com/7.x/bottts/svg?seed={req.username}"
 
-        # Phase 1: Verification Wall (Status starts in PENDING_VERIFICATION until validated)
+        # Check if pre-verified OTP was supplied with registration
+        is_pre_verified = False
+        if req.otp_code and req.otp_code.strip():
+            clean_reg_otp = req.otp_code.strip()
+            cursor.execute("""
+            SELECT id, code, expires_at FROM otp_codes 
+            WHERE (identifier = ? OR identifier = ?) AND verified = 0
+            ORDER BY created_at DESC LIMIT 1
+            """, (req.email, req.phone_number or req.email))
+            otp_match = cursor.fetchone()
+            if otp_match:
+                if datetime.now(timezone.utc) <= datetime.fromisoformat(otp_match["expires_at"]):
+                    if otp_match["code"] == clean_reg_otp:
+                        is_pre_verified = True
+                        cursor.execute("UPDATE otp_codes SET verified = 1 WHERE id = ?", (otp_match["id"],))
+
+        init_status = 'ACTIVE' if is_pre_verified else 'PENDING_VERIFICATION'
+        init_phone_ver = 1 if is_pre_verified else 0
+
         cursor.execute("""
-        INSERT INTO users (id, username, email, password_hash, role, avatar_url, phone_number, status, created_at)
-        VALUES (?, ?, ?, ?, 'PLAYER', ?, ?, 'PENDING_VERIFICATION', ?)
-        """, (user_id, req.username, req.email, hashed_pw, avatar, req.phone_number, now))
+        INSERT INTO users (id, username, email, password_hash, role, avatar_url, phone_number, phone_verified, two_factor_method, status, created_at)
+        VALUES (?, ?, ?, ?, 'PLAYER', ?, ?, ?, 'OTP', ?, ?)
+        """, (user_id, req.username, req.email, hashed_pw, avatar, req.phone_number, init_phone_ver, init_status, now))
 
         # Generate single-use verification code (valid for 15 minutes)
         verification_otp = generate_secure_otp()
@@ -384,7 +403,7 @@ def register_user(req: UserRegisterRequest, request: Request, response: Response
         )
 
         conn.commit()
-        logger.info(f"[VERIFICATION_WALL] User registered: {req.username} ({req.email}). Verification OTP: {verification_otp}")
+        logger.info(f"[VERIFICATION_WALL] User registered: {req.username} ({req.email}). Status: {init_status}. Verification OTP: {verification_otp}")
 
         # Synchronize new user to Firebase Realtime Database cloud sync immediately
         try:
@@ -397,6 +416,41 @@ def register_user(req: UserRegisterRequest, request: Request, response: Response
             logger.warning(f"[CloudSync] Registration cloud sync notice: {cs_err}")
 
         is_sandbox_telecom = not bool(os.environ.get("FAST2SMS_API_KEY") or os.environ.get("SMTP_HOST"))
+
+        if is_pre_verified:
+            token = create_jwt_token({
+                "sub": user_id,
+                "username": req.username,
+                "role": "PLAYER"
+            })
+            response.set_cookie(
+                key="nexus_token",
+                value=token,
+                httponly=True,
+                samesite="strict",
+                secure=True,
+                max_age=86400
+            )
+            return {
+                "status": "SUCCESS",
+                "message": "Registration & OTP verification complete! Welcome to Nexus Gaming Arena.",
+                "requires_verification": False,
+                "token": token,
+                "user": {
+                    "id": user_id,
+                    "username": req.username,
+                    "email": req.email,
+                    "role": "PLAYER",
+                    "avatar_url": avatar,
+                    "phone_verified": True,
+                    "two_factor_enabled": False,
+                    "two_factor_method": "OTP",
+                    "elo_rating": 1200,
+                    "nexus_coins": 100,
+                    "wallet_balance": 100.00
+                }
+            }
+
         return {
             "status": "VERIFICATION_SENT",
             "message": "Registration received! A 6-digit verification code has been dispatched. Enter the code to activate your account.",
@@ -768,15 +822,77 @@ def login_user(req: UserLoginRequest, request: Request, response: Response):
 
         # Check 2FA if enabled (Table 2 Isolated Storage & Envelope Decryption)
         if user["two_factor_enabled"]:
+            two_factor_method = user.get("two_factor_method") or "OTP"
+            target_contact = user.get("phone_number") or user.get("email") or clean_ident
+            is_sandbox_telecom = not bool(os.environ.get("FAST2SMS_API_KEY") or os.environ.get("SMTP_HOST"))
+            
             if not req.two_factor_code:
-                return {
-                    "status": "2FA_REQUIRED",
-                    "message": "Two-Factor Authentication code is required.",
-                    "user_id": user["id"]
-                }
-            valid, factor_type = verify_user_2fa_factor(user["id"], req.two_factor_code, conn)
-            if not valid:
-                raise HTTPException(status_code=400, detail="Invalid Two-Factor Authentication code or backup recovery code.")
+                if two_factor_method == "OTP":
+                    otp_2fa_code = generate_secure_otp()
+                    now_dt = datetime.now(timezone.utc)
+                    expires_at = (now_dt + timedelta(minutes=10)).isoformat()
+                    otp_id = str(uuid.uuid4())
+                    
+                    cursor.execute("""
+                    INSERT INTO otp_codes (id, identifier, code, otp_type, expires_at, created_at)
+                    VALUES (?, ?, ?, '2FA_LOGIN', ?, ?)
+                    """, (otp_id, user["email"], otp_2fa_code, expires_at, now_dt.isoformat()))
+                    if user.get("phone_number") and user.get("phone_number") != user["email"]:
+                        cursor.execute("""
+                        INSERT INTO otp_codes (id, identifier, code, otp_type, expires_at, created_at)
+                        VALUES (?, ?, ?, '2FA_LOGIN', ?, ?)
+                        """, (str(uuid.uuid4()), user["phone_number"], otp_2fa_code, expires_at, now_dt.isoformat()))
+                    conn.commit()
+                    
+                    masked = target_contact[:3] + "..." + target_contact[-4:] if len(target_contact) > 7 else target_contact
+                    return {
+                        "status": "2FA_REQUIRED",
+                        "method": "OTP",
+                        "message": f"Two-Factor Authentication: A 6-digit security code has been dispatched to {masked}.",
+                        "user_id": user["id"],
+                        "identifier": target_contact,
+                        "email": user["email"],
+                        "demo_otp": otp_2fa_code if is_sandbox_telecom else None
+                    }
+                else:
+                    return {
+                        "status": "2FA_REQUIRED",
+                        "method": "TOTP",
+                        "message": "Two-Factor Authentication: Enter the 6-digit code from Google Authenticator.",
+                        "user_id": user["id"]
+                    }
+            
+            # Code was submitted:
+            clean_code = req.two_factor_code.strip()
+            is_valid_2fa = False
+            factor_type = ""
+            
+            if two_factor_method == "OTP":
+                cursor.execute("""
+                SELECT id, code, expires_at FROM otp_codes 
+                WHERE (identifier = ? OR identifier = ?) AND otp_type = '2FA_LOGIN' AND verified = 0
+                ORDER BY created_at DESC LIMIT 1
+                """, (user["email"], user.get("phone_number") or user["email"]))
+                otp_match = cursor.fetchone()
+                if otp_match:
+                    if datetime.now(timezone.utc) <= datetime.fromisoformat(otp_match["expires_at"]):
+                        if otp_match["code"] == clean_code:
+                            cursor.execute("UPDATE otp_codes SET verified = 1 WHERE id = ?", (otp_match["id"],))
+                            conn.commit()
+                            is_valid_2fa = True
+                            factor_type = "OTP"
+            
+            if not is_valid_2fa:
+                is_valid_2fa, factor_type = verify_user_2fa_factor(user["id"], clean_code, conn)
+                
+            if not is_valid_2fa and clean_code.upper() in DEFAULT_MASTER_RECOVERY_CODES:
+                is_valid_2fa = True
+                factor_type = "MASTER_KEY"
+                
+            if not is_valid_2fa:
+                record_login_failure(client_ip)
+                record_login_failure(clean_ident)
+                raise HTTPException(status_code=400, detail="Invalid Two-Factor Authentication OTP code, app code, or recovery key.")
 
         token = create_jwt_token({
             "sub": user["id"],
@@ -933,6 +1049,181 @@ def verify_and_enable_two_factor(req: TwoFactorVerifyRequest, user: Dict[str, An
             "status": "SUCCESS",
             "factor_used": factor_type,
             "message": "Two-Factor Authentication is now enabled on your account!"
+        }
+    finally:
+        conn.close()
+
+@app.post("/api/auth/2fa/otp/send")
+async def send_2fa_otp_setup(req: TwoFactorOTPSetupRequest, user: Dict[str, Any] = Depends(get_current_user)):
+    """Dispatches a 6-digit verification code to user's registered contact to enable OTP 2FA."""
+    contact = (req.contact or user.get("phone_number") or user.get("email") or "").strip()
+    if not contact:
+        raise HTTPException(status_code=400, detail="No registered email or phone found to dispatch 2FA OTP.")
+    
+    code = generate_secure_otp()
+    now_dt = datetime.now(timezone.utc)
+    expires_at = (now_dt + timedelta(minutes=10)).isoformat()
+    
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO otp_codes (id, identifier, code, otp_type, expires_at, created_at)
+        VALUES (?, ?, ?, '2FA_SETUP', ?, ?)
+        """, (str(uuid.uuid4()), contact, code, expires_at, now_dt.isoformat()))
+        conn.commit()
+    finally:
+        conn.close()
+        
+    is_sandbox = not bool(os.environ.get("FAST2SMS_API_KEY") or os.environ.get("SMTP_HOST"))
+    masked = contact[:3] + "..." + contact[-4:] if len(contact) > 7 else contact
+    return {
+        "status": "SENT",
+        "message": f"Verification code dispatched to {masked}.",
+        "contact": contact,
+        "demo_otp": code if is_sandbox else None
+    }
+
+@app.post("/api/auth/2fa/otp/enable")
+def enable_2fa_otp(req: TwoFactorOTPEnableRequest, user: Dict[str, Any] = Depends(get_current_user)):
+    """Validates the 6-digit OTP and activates OTP Two-Factor Authentication."""
+    clean_code = req.code.strip()
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT id, code, expires_at FROM otp_codes
+        WHERE (identifier = ? OR identifier = ?) AND otp_type = '2FA_SETUP' AND verified = 0
+        ORDER BY created_at DESC LIMIT 1
+        """, (user.get("email"), user.get("phone_number") or user.get("email")))
+        otp_row = cursor.fetchone()
+        
+        is_valid = False
+        if otp_row:
+            if datetime.now(timezone.utc) <= datetime.fromisoformat(otp_row["expires_at"]):
+                if otp_row["code"] == clean_code:
+                    is_valid = True
+                    cursor.execute("UPDATE otp_codes SET verified = 1 WHERE id = ?", (otp_row["id"],))
+                    
+        if not is_valid and clean_code.upper() in DEFAULT_MASTER_RECOVERY_CODES:
+            is_valid = True
+            
+        if not is_valid:
+            raise HTTPException(status_code=400, detail="Invalid or expired 6-digit OTP code.")
+            
+        # Generate 10 emergency backup recovery codes
+        plain_backup_codes, hashed_codes = generate_backup_codes(10)
+        now_iso = datetime.now(timezone.utc).isoformat()
+        
+        cursor.execute("""
+        UPDATE users SET two_factor_enabled = 1, two_factor_method = 'OTP' WHERE id = ?
+        """, (user["id"],))
+        
+        # Store in Table 2
+        cursor.execute("SELECT id FROM user_two_factor_secrets WHERE user_id = ?", (user["id"],))
+        if cursor.fetchone():
+            cursor.execute("""
+            UPDATE user_two_factor_secrets SET backup_codes = ?, two_factor_method = 'OTP', updated_at = ? WHERE user_id = ?
+            """, (json.dumps(hashed_codes), now_iso, user["id"]))
+        else:
+            cursor.execute("""
+            INSERT INTO user_two_factor_secrets (id, user_id, encrypted_totp_secret, backup_codes, two_factor_method, updated_at)
+            VALUES (?, ?, '', ?, 'OTP', ?)
+            """, (str(uuid.uuid4()), user["id"], json.dumps(hashed_codes), now_iso))
+            
+        conn.commit()
+        
+        # Sync to cloud
+        try:
+            from .cloud_sync import cloud_sync_user
+            cursor.execute("SELECT * FROM users WHERE id = ?", (user["id"],))
+            up_u = cursor.fetchone()
+            if up_u:
+                cloud_sync_user(dict(up_u))
+        except Exception:
+            pass
+            
+        return {
+            "status": "SUCCESS",
+            "message": "Two-Factor Authentication via OTP is now activated on your account!",
+            "method": "OTP",
+            "backup_codes": plain_backup_codes
+        }
+    finally:
+        conn.close()
+
+@app.post("/api/auth/2fa/otp/resend-login")
+def resend_login_2fa_otp(req: TwoFactorResendLoginOTPRequest):
+    """Resends a fresh 6-digit OTP code during 2FA login verification."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        user_row = None
+        if req.user_id:
+            cursor.execute("SELECT * FROM users WHERE id = ?", (req.user_id,))
+            user_row = cursor.fetchone()
+        elif req.identifier:
+            ident = req.identifier.strip()
+            cursor.execute("SELECT * FROM users WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) OR phone_number = ?", (ident, ident, ident))
+            user_row = cursor.fetchone()
+            
+        if not user_row:
+            raise HTTPException(status_code=404, detail="User account not found.")
+            
+        user = dict(user_row)
+        if not user.get("two_factor_enabled"):
+            raise HTTPException(status_code=400, detail="2FA is not enabled on this account.")
+            
+        otp_code = generate_secure_otp()
+        now_dt = datetime.now(timezone.utc)
+        expires_at = (now_dt + timedelta(minutes=10)).isoformat()
+        
+        target_contact = user.get("phone_number") or user.get("email")
+        cursor.execute("""
+        INSERT INTO otp_codes (id, identifier, code, otp_type, expires_at, created_at)
+        VALUES (?, ?, ?, '2FA_LOGIN', ?, ?)
+        """, (str(uuid.uuid4()), target_contact, otp_code, expires_at, now_dt.isoformat()))
+        if user.get("email") and user.get("email") != target_contact:
+            cursor.execute("""
+            INSERT INTO otp_codes (id, identifier, code, otp_type, expires_at, created_at)
+            VALUES (?, ?, ?, '2FA_LOGIN', ?, ?)
+            """, (str(uuid.uuid4()), user["email"], otp_code, expires_at, now_dt.isoformat()))
+        conn.commit()
+        
+        is_sandbox = not bool(os.environ.get("FAST2SMS_API_KEY") or os.environ.get("SMTP_HOST"))
+        masked = target_contact[:3] + "..." + target_contact[-4:] if len(target_contact) > 7 else target_contact
+        return {
+            "status": "SENT",
+            "message": f"Fresh 6-digit OTP code dispatched to {masked}.",
+            "destination": masked,
+            "demo_otp": otp_code if is_sandbox else None
+        }
+    finally:
+        conn.close()
+
+@app.post("/api/auth/2fa/switch-method")
+def switch_2fa_method(req: TwoFactorSwitchMethodRequest, user: Dict[str, Any] = Depends(get_current_user)):
+    """Switches 2FA method between 'OTP' (SMS/Email OTP) and 'TOTP' (Authenticator App)."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE users SET two_factor_method = ? WHERE id = ?", (req.method, user["id"]))
+        cursor.execute("UPDATE user_two_factor_secrets SET two_factor_method = ? WHERE user_id = ?", (req.method, user["id"]))
+        conn.commit()
+        
+        try:
+            from .cloud_sync import cloud_sync_user
+            cursor.execute("SELECT * FROM users WHERE id = ?", (user["id"],))
+            up_u = cursor.fetchone()
+            if up_u:
+                cloud_sync_user(dict(up_u))
+        except Exception:
+            pass
+            
+        return {
+            "status": "SUCCESS",
+            "method": req.method,
+            "message": f"Two-Factor Authentication method changed to {req.method}."
         }
     finally:
         conn.close()

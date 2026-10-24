@@ -1153,12 +1153,48 @@ async function performUnifiedLogin(u, p, c2fa = "", rememberMe = true) {
         if (res.ok && contentType.includes("application/json")) {
             backendProcessed = true;
             const data = await res.json();
+
+            if (data.status === "VERIFICATION_REQUIRED") {
+                if (typeof playCyberSound === 'function') playCyberSound('warning');
+                showToast("📬 " + (data.message || "Account pending verification. Please validate your OTP."), "info");
+                openAccountVerificationModal(data.email || u, data.demo_otp || "");
+                return false;
+            }
+
             if (data.status === "2FA_REQUIRED") {
+                window._current2FALoginUserId = data.user_id || "";
+                window._current2FALoginIdentifier = data.identifier || data.email || u;
+                window._current2FAMethod = data.method || "OTP";
+
                 const landingBox = document.getElementById("landing-login-2fa-container");
                 if (landingBox) landingBox.classList.remove("hidden");
                 const modalBox = document.getElementById("login-2fa-container");
                 if (modalBox) modalBox.classList.remove("hidden");
-                showToast("Enter your 6-digit Authenticator code", "info");
+
+                const labelEl = document.getElementById("login-2fa-label");
+                const inputEl = document.getElementById("login-2fa-code");
+                const resendBtn = document.getElementById("btn-resend-login-2fa");
+                const demoChip = document.getElementById("login-2fa-demo-chip");
+
+                if (data.method === "OTP") {
+                    if (labelEl) labelEl.innerHTML = `<i class="fa-solid fa-mobile-screen text-cyan-400"></i> SMS / Email 2FA Security OTP`;
+                    if (inputEl) inputEl.placeholder = "Enter 6-digit OTP code";
+                    if (resendBtn) resendBtn.classList.remove("hidden");
+                    showToast(data.message || "Enter the 6-digit security OTP sent to your contact", "info");
+                } else {
+                    if (labelEl) labelEl.innerHTML = `<i class="fa-solid fa-shield-halved text-cyan-400"></i> Google Authenticator (TOTP)`;
+                    if (inputEl) inputEl.placeholder = "Enter 6-digit app code";
+                    if (resendBtn) resendBtn.classList.add("hidden");
+                    showToast("Enter your 6-digit Authenticator code", "info");
+                }
+
+                if (data.demo_otp && demoChip) {
+                    demoChip.innerHTML = `<span onclick="autoFillLogin2FA('${data.demo_otp}')" class="cursor-pointer text-[10px] text-amber-300 font-mono bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/40 hover:bg-amber-500/30">Demo OTP: <strong>${data.demo_otp}</strong> (Click to fill)</span>`;
+                    demoChip.classList.remove("hidden");
+                    if (inputEl) inputEl.value = data.demo_otp;
+                }
+
+                if (inputEl) inputEl.focus();
                 return false;
             }
 
@@ -6094,53 +6130,118 @@ function autoFillRegistrationOTP() {
 }
 window.autoFillRegistrationOTP = autoFillRegistrationOTP;
 
-function sendRegistrationOTP() {
+async function sendRegistrationOTP() {
     if (typeof playCyberSound === 'function') playCyberSound('click');
     const mobile = (document.getElementById("reg-new-mobile")?.value || "").trim();
     const email = (document.getElementById("reg-new-email")?.value || "").trim();
-    if (!mobile && !email) {
-        showToast("Please enter a mobile number or email address", "error");
+    const contact = email || mobile;
+    if (!contact) {
+        showToast("Please enter an email address or mobile number", "error");
         return;
-    }
-    generatedRegOTP = generateDynamicSecureOTP();
-    isRegOTPVerified = false;
-    const statusEl = document.getElementById("reg-otp-status");
-    if (statusEl) {
-        statusEl.innerHTML = `<span class="text-amber-400 font-mono">📲 OTP dispatched to ${escapeHtml(mobile || email)}! Verification Code: <strong>${generatedRegOTP}</strong> (Expires in 5m)</span>`;
     }
     const btn = document.getElementById("btn-send-reg-otp");
     if (btn) {
-        btn.innerText = "Resend (30s)";
-        btn.classList.add("opacity-50");
-        setTimeout(() => {
-            btn.innerText = "Send Code";
-            btn.classList.remove("opacity-50");
-        }, 30000);
+        btn.innerText = "Sending...";
+        btn.disabled = true;
     }
-    showToast(`📲 Security OTP dispatched to ${mobile || email}! Code: ${generatedRegOTP}`, "success");
+    const statusEl = document.getElementById("reg-otp-status");
+    try {
+        const res = await fetch("/api/auth/otp/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                identifier: contact,
+                otp_type: email ? "EMAIL" : "PHONE"
+            })
+        });
+        const d = await res.json().catch(() => ({}));
+        if (res.ok) {
+            generatedRegOTP = d.demo_code || "";
+            isRegOTPVerified = false;
+            if (statusEl) {
+                let msg = `📲 6-digit verification code dispatched to ${escapeHtml(contact)}.`;
+                if (d.demo_code) {
+                    msg += ` <span class="bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/40 cursor-pointer font-bold" onclick="autoFillRegistrationOTP('${d.demo_code}')">Demo OTP: ${d.demo_code} (Click to fill)</span>`;
+                    const inp = document.getElementById("reg-otp-code");
+                    if (inp) inp.value = d.demo_code;
+                }
+                statusEl.innerHTML = msg;
+            }
+            showToast(`📲 Security OTP dispatched to ${contact}!`, "success");
+        } else {
+            generatedRegOTP = generateDynamicSecureOTP();
+            if (statusEl) {
+                statusEl.innerHTML = `<span class="text-amber-400 font-mono">📲 Sandbox OTP: <strong>${generatedRegOTP}</strong> (Click to auto-fill)</span>`;
+                const inp = document.getElementById("reg-otp-code");
+                if (inp) inp.value = generatedRegOTP;
+            }
+            showToast(`OTP dispatched: ${generatedRegOTP}`, "info");
+        }
+    } catch (e) {
+        generatedRegOTP = generateDynamicSecureOTP();
+        if (statusEl) {
+            statusEl.innerHTML = `<span class="text-amber-400 font-mono">📲 Offline Sandbox OTP: <strong>${generatedRegOTP}</strong></span>`;
+            const inp = document.getElementById("reg-otp-code");
+            if (inp) inp.value = generatedRegOTP;
+        }
+    } finally {
+        if (btn) {
+            btn.innerText = "Resend (30s)";
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.innerText = "Send Code";
+                btn.disabled = false;
+            }, 30000);
+        }
+    }
 }
 
-function verifyRegistrationOTP() {
+async function verifyRegistrationOTP() {
     if (typeof playCyberSound === 'function') playCyberSound('click');
     const code = (document.getElementById("reg-otp-code")?.value || "").trim();
+    const mobile = (document.getElementById("reg-new-mobile")?.value || "").trim();
+    const email = (document.getElementById("reg-new-email")?.value || "").trim();
+    const contact = email || mobile;
     const statusEl = document.getElementById("reg-otp-status");
-    if (code && generatedRegOTP && code === generatedRegOTP) {
+    
+    if (!code || code.length < 4) {
+        showToast("Please enter the 6-digit verification code", "error");
+        return;
+    }
+    
+    let verified = false;
+    try {
+        const res = await fetch("/api/auth/otp/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ identifier: contact, code })
+        });
+        if (res.ok) {
+            verified = true;
+        }
+    } catch(e) {}
+    
+    if (!verified && generatedRegOTP && code === generatedRegOTP) {
+        verified = true;
+    }
+    
+    if (verified) {
         isRegOTPVerified = true;
         if (typeof playCyberSound === 'function') playCyberSound('success');
         if (statusEl) {
-            statusEl.innerHTML = `<span class="text-green-400 font-bold font-mono">✓ Contact verified successfully!</span>`;
+            statusEl.innerHTML = `<span class="text-green-400 font-bold font-mono">✓ Contact verified successfully! You can now complete registration.</span>`;
         }
         const verifyBtn = document.getElementById("btn-verify-reg-otp");
         if (verifyBtn) {
             verifyBtn.innerHTML = `<i class="fa-solid fa-circle-check"></i> Verified`;
             verifyBtn.className = "px-4 py-2 rounded-xl bg-green-500 text-black text-xs font-black shadow";
         }
-        showToast("✓ OTP verified successfully! You may complete registration.", "success");
+        showToast("✓ OTP verified successfully!", "success");
     } else {
         isRegOTPVerified = false;
         if (typeof playCyberSound === 'function') playCyberSound('error');
         if (statusEl) {
-            statusEl.innerHTML = `<span class="text-red-400 font-mono">✗ Invalid or mismatched OTP code.</span>`;
+            statusEl.innerHTML = `<span class="text-red-400 font-mono">✗ Invalid or expired OTP code.</span>`;
         }
         showToast("Invalid OTP code. Please enter the code sent to your contact.", "error");
     }
@@ -6360,13 +6461,9 @@ async function handleRegisterWithOTP(e) {
         return;
     }
 
-    if (!isRegOTPVerified) {
-        if (typeof playCyberSound === 'function') playCyberSound('error');
-        showToast("Please enter and verify your Mobile/Email OTP first", "error");
-        return;
-    }
+    const regOtpCode = (document.getElementById("reg-otp-code")?.value || "").trim();
 
-    // Call backend API /api/auth/register with anti-enumeration & verification wall
+    // Call backend API /api/auth/register with optional in-form verified OTP
     try {
         const regRes = await fetch("/api/auth/register", {
             method: "POST",
@@ -6375,13 +6472,29 @@ async function handleRegisterWithOTP(e) {
                 username: username,
                 email: email,
                 password: pass,
-                phone_number: mobile
+                phone_number: mobile,
+                otp_code: regOtpCode || null
             })
         });
         const contentType = regRes.headers.get("content-type") || "";
         if (contentType.includes("application/json")) {
             const regData = await regRes.json().catch(() => ({}));
             if (regRes.ok) {
+                if (regData.status === "SUCCESS" && regData.user) {
+                    state.token = regData.token;
+                    state.user = regData.user;
+                    state.walletBalance = regData.user.wallet_balance !== undefined ? regData.user.wallet_balance : 100.00;
+                    state.nexusCoins = regData.user.nexus_coins || 100;
+                    saveUserAuthSession(regData.user, regData.token, true, username);
+                    enterArenaApp(true);
+                    closeModal("modal-login");
+                    if (typeof playCyberSound === 'function') playCyberSound('success');
+                    updateHeaderProfile();
+                    loadTransactions();
+                    showToast(`🎉 Registration Successful! Welcome ${username} (+100 Coins)!`, "success");
+                    switchTab('tournaments');
+                    return;
+                }
                 if (regData.requires_verification || regData.status === "VERIFICATION_SENT") {
                     openAccountVerificationModal(email, regData.demo_otp || "");
                     showToast("📬 " + regData.message, "info");
@@ -6503,17 +6616,19 @@ async function submitAccountActivation() {
             })
         });
         const data = await res.json();
-        if (res.ok) {
+        if (res.ok && data.user) {
             state.token = data.token;
             state.user = data.user;
-            localStorage.setItem("nexus_token", data.token);
-            localStorage.setItem("nexus_user", JSON.stringify(data.user));
-            sessionStorage.setItem("nexus_active_session", "true");
+            state.walletBalance = data.user.wallet_balance !== undefined ? data.user.wallet_balance : 100.00;
+            state.nexusCoins = data.user.nexus_coins || 100;
+            saveUserAuthSession(data.user, data.token, true, data.user.username);
             closeModal("modal-account-activation");
             closeModal("modal-login");
-            enterArenaApp();
+            enterArenaApp(true);
+            updateHeaderProfile();
             playCyberSound('success');
             showToast("🎉 Account verified & activated! Welcome to Nexus Arena.", "success");
+            switchTab('tournaments');
             return;
         } else {
             showToast(data.detail || "Invalid verification code", "error");
@@ -6524,6 +6639,51 @@ async function submitAccountActivation() {
         showToast("⚠️ Account verification service unreachable. Please check connection and retry.", "error");
     }
 }
+
+
+async function resendAccountActivationOTP() {
+    if (typeof playCyberSound === 'function') playCyberSound('click');
+    const btn = document.getElementById("btn-resend-activation-otp");
+    if (btn) {
+        btn.innerText = "Sending...";
+        btn.disabled = true;
+    }
+    try {
+        const res = await fetch("/api/auth/otp/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                identifier: currentActivationEmail,
+                otp_type: "ACCOUNT_VERIFICATION"
+            })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            showToast("📬 Fresh verification code dispatched!", "success");
+            const demoBadge = document.getElementById("activation-demo-badge");
+            const demoCodeEl = document.getElementById("activation-demo-code");
+            const otpInput = document.getElementById("activation-otp-input");
+            if (data.demo_code && demoBadge && demoCodeEl) {
+                demoBadge.classList.remove("hidden");
+                demoCodeEl.textContent = data.demo_code;
+                if (otpInput) otpInput.value = data.demo_code;
+            }
+        } else {
+            showToast(data.detail || "Failed to resend code.", "error");
+        }
+    } catch(e) {
+        showToast("Network error resending verification code.", "error");
+    } finally {
+        if (btn) {
+            btn.innerText = "Resend (30s)";
+            setTimeout(() => {
+                btn.innerText = "Resend Code";
+                btn.disabled = false;
+            }, 30000);
+        }
+    }
+}
+window.resendAccountActivationOTP = resendAccountActivationOTP;
 
 const MASTER_ADMIN_EMERGENCY_KEYS = [
     "NEXUS-SEC-7942-8812",
@@ -14289,9 +14449,11 @@ async function handleUpdateAdminCredentials(e) {
             two_factor_code: code2fa || null
         };
 
+        const headers = { "Content-Type": "application/json" };
+        if (state.token) headers["Authorization"] = "Bearer " + state.token;
         const res = await fetch("/api/admin/credentials/update", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: headers,
             body: JSON.stringify(payload)
         });
 
@@ -14418,9 +14580,11 @@ async function handleUserChangeCredentials(e) {
             two_factor_code: code2fa || null
         };
 
+        const userHeaders = { "Content-Type": "application/json" };
+        if (state.token) userHeaders["Authorization"] = "Bearer " + state.token;
         const res = await fetch(endpoint, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: userHeaders,
             body: JSON.stringify(payload)
         });
 
@@ -14722,3 +14886,150 @@ async function deleteTickerItem(id) {
     }
 }
 window.deleteTickerItem = deleteTickerItem;
+
+function autoFillLogin2FA(code) {
+    const input = document.getElementById("login-2fa-code");
+    if (input) {
+        input.value = code;
+        input.focus();
+    }
+}
+window.autoFillLogin2FA = autoFillLogin2FA;
+
+async function resendLogin2FAOTP() {
+    if (typeof playCyberSound === 'function') playCyberSound('click');
+    const btn = document.getElementById("btn-resend-login-2fa");
+    if (btn) {
+        btn.disabled = true;
+        btn.innerText = "Sending...";
+    }
+    try {
+        const res = await fetch("/api/auth/2fa/otp/resend-login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                user_id: window._current2FALoginUserId || null,
+                identifier: window._current2FALoginIdentifier || null
+            })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            showToast("📲 Fresh 2FA OTP code dispatched!", "success");
+            const demoChip = document.getElementById("login-2fa-demo-chip");
+            const inputEl = document.getElementById("login-2fa-code");
+            if (data.demo_otp && demoChip) {
+                demoChip.innerHTML = `<span onclick="autoFillLogin2FA('${data.demo_otp}')" class="cursor-pointer text-[10px] text-amber-300 font-mono bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/40 hover:bg-amber-500/30">Demo OTP: <strong>${data.demo_otp}</strong> (Click to fill)</span>`;
+                demoChip.classList.remove("hidden");
+                if (inputEl) inputEl.value = data.demo_otp;
+            }
+        } else {
+            showToast(data.detail || "Could not resend OTP.", "error");
+        }
+    } catch(e) {
+        showToast("Network error resending OTP.", "error");
+    } finally {
+        if (btn) {
+            let countdown = 30;
+            const timer = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    btn.innerText = `Resend (${countdown}s)`;
+                } else {
+                    clearInterval(timer);
+                    btn.innerText = "Resend OTP";
+                    btn.disabled = false;
+                }
+            }, 1000);
+        }
+    }
+}
+window.resendLogin2FAOTP = resendLogin2FAOTP;
+
+function open2FASelectionModal() {
+    playCyberSound('click');
+    openModal("modal-2fa-method-choice");
+}
+window.open2FASelectionModal = open2FASelectionModal;
+
+async function setup2FAViaOTP() {
+    playCyberSound('click');
+    closeModal("modal-2fa-method-choice");
+    const headers = state.token ? { "Authorization": `Bearer ${state.token}` } : {};
+    try {
+        const res = await fetch("/api/auth/2fa/otp/send", {
+            method: "POST",
+            headers: { ...headers, "Content-Type": "application/json" },
+            body: JSON.stringify({})
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            const contactEl = document.getElementById("otp-2fa-contact-display");
+            if (contactEl) contactEl.textContent = data.contact || state.user?.email || "your registered contact";
+            const demoEl = document.getElementById("otp-2fa-demo-chip");
+            const inputEl = document.getElementById("otp-2fa-verify-code");
+            if (data.demo_otp && demoEl) {
+                demoEl.innerHTML = `Demo Code: <strong>${data.demo_otp}</strong> (Auto-filled)`;
+                demoEl.classList.remove("hidden");
+                if (inputEl) inputEl.value = data.demo_otp;
+            } else if (demoEl) {
+                demoEl.classList.add("hidden");
+            }
+            openModal("modal-2fa-otp-setup");
+            showToast("📲 6-digit verification code sent to your contact!", "info");
+        } else {
+            showToast(data.detail || "Could not dispatch 2FA OTP.", "error");
+        }
+    } catch(e) {
+        showToast("Network error initiating OTP 2FA.", "error");
+    }
+}
+window.setup2FAViaOTP = setup2FAViaOTP;
+
+async function verifyAndEnableOTP2FA() {
+    playCyberSound('click');
+    const code = (document.getElementById("otp-2fa-verify-code")?.value || "").trim();
+    if (!code || code.length < 4) {
+        showToast("Please enter the verification code", "error");
+        return;
+    }
+    const headers = state.token ? { "Authorization": `Bearer ${state.token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
+    try {
+        const res = await fetch("/api/auth/2fa/otp/enable", {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ code })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+            closeModal("modal-2fa-otp-setup");
+            playCyberSound('success');
+            if (state.user) {
+                state.user.two_factor_enabled = true;
+                state.user.two_factor_method = "OTP";
+                try { localStorage.setItem("nexus_user", JSON.stringify(state.user)); } catch (e) {}
+            }
+            const t1 = document.getElementById("toggle-2fa");
+            const t2 = document.getElementById("drawer-toggle-2fa");
+            if (t1) t1.checked = true;
+            if (t2) t2.checked = true;
+
+            // Show backup recovery codes
+            if (data.backup_codes && Array.isArray(data.backup_codes)) {
+                window._currentBackupCodes = data.backup_codes;
+                const listEl = document.getElementById("2fa-recovery-keys-list");
+                if (listEl) {
+                    listEl.innerHTML = data.backup_codes.map(c => 
+                        `<span class="p-1 rounded bg-cyber-dark/80 border border-cyber-border/70 text-center select-all">${c}</span>`
+                    ).join('');
+                }
+            }
+            showToast("🎉 Two-Factor Authentication via OTP is now Active!", "success");
+        } else {
+            showToast(data.detail || "Invalid 6-digit OTP code.", "error");
+        }
+    } catch(e) {
+        showToast("Network error verifying 2FA code.", "error");
+    }
+}
+window.verifyAndEnableOTP2FA = verifyAndEnableOTP2FA;
+
